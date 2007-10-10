@@ -19,16 +19,19 @@
 
     list <map <string, string> > list_of_patterns = [
 	$[
+	    // TRANSLATORS: A name of pattern, used as RadioButton label
 	    "label"	: _("Admin Server Installation"),
 	    "name"	: "SLEPOS_Server_Admin",
 	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-powertweak.png",
 	],
 	$[
+	    // TRANSLATORS: A name of pattern, used as RadioButton label
 	    "label"	: _("Branch Server Installation"),
 	    "name"	: "SLEPOS_Server_Branch",
 	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-iscsi-server.png",
 	],
 	$[
+	    // TRANSLATORS: A name of pattern, used as RadioButton label
 	    "label"	: _("Image Server Installation"),
 	    "name"	: "SLEPOS_Image_Server",
 	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-instserver.png",
@@ -86,6 +89,8 @@
 		Pkg::PkgSolve (false);
 		return true;
 	    } else {
+		y2error ("Can't select pattern %1", pattern_to_select);
+		// TRANSLATORS: Error message, %1 is replaced with the name of the pattern
 		Report::Error (sformat(_("Unable to select pattern '%1'"), GetPatternLabel (pattern_to_select)));
 		return false;
 	    }
@@ -133,18 +138,21 @@
 	term_patterns,
 	CreateRadioButtonTerm (
 	    "detailed",
+	    // TRANSLATORS: Radio button
 	    _("Detailed Selection"),
 	    ""
 	)
     );
 
     Wizard::SetContentsButtons (
+	// TRANSLATORS: Dialog caption
 	_("Server Pattern Selection"),
 	`RadioButtonGroup (
 	    `id (`selected_pattern),
 	    `opt (`notify),
 	    term_patterns
 	),
+	// TRANSLATORS: Dialog help
 	_("<p>Some help - <b>FIXME!!!!</b></p>"),
 	Label::BackButton(),
 	Label::NextButton()
