@@ -1,8 +1,8 @@
 # Makefile.am for installation/general
 #
-SUBDIRS = docs tests
+SUBDIRS = 
 
-controldir = $(yast2dir)/control
+controldir = /etc/YaST2
 
 control_DATA = slepos_migration.xml
 

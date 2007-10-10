@@ -21,11 +21,6 @@ Summary:	Configuration of pos-installation
 
 %files
 %defattr(-,root,root)
-%dir @yncludedir@/pos-installation
-@yncludedir@/pos-installation/*
-@clientdir@/pos-installation.ycp
-@clientdir@/pos-installation_*.ycp
-@moduledir@/PosInstallation.*
-@moduledir@/PosInstallation2.*
+@clientdir@/*.ycp
 @desktopdir@/pos-installation.desktop
 %doc @docdir@
