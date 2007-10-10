@@ -1,0 +1,188 @@
+/**
+ */
+
+{
+    // FIXME
+    textdomain "SLEPOS";
+
+    import "Wizard";
+    import "Label";
+    import "Popup";
+    import "Installation";
+    import "Mode";
+    import "Report";
+    import "Stage";
+    import "PackageCallbacks";
+
+    if (Mode::normal())
+	Wizard::CreateDialog();
+
+    list <map <string, string> > list_of_patterns = [
+	$[
+	    "label"	: _("Admin Server Installation"),
+	    "name"	: "SLEPOS_Server_Admin",
+	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-powertweak.png",
+	],
+	$[
+	    "label"	: _("Branch Server Installation"),
+	    "name"	: "SLEPOS_Server_Branch",
+	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-iscsi-server.png",
+	],
+	$[
+	    "label"	: _("Image Server Installation"),
+	    "name"	: "SLEPOS_Image_Server",
+	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-instserver.png",
+	],
+    ];
+
+    list <string> all_patterns_in_selection = [];
+
+    void InitTargetNow () {
+	Pkg::SourceStartManager (true);
+	Pkg::TargetInit (Installation::destdir, false);
+    }
+
+    string GetPatternLabel (string pattern_name) {
+	string pattern_label = pattern_name;
+
+	foreach (map <string, string> one_pattern, list_of_patterns, {
+	    if (one_pattern["name"]:nil == pattern_name) {
+		pattern_label = one_pattern["label"]:pattern_name;
+		break;
+	    }
+	});
+
+	return pattern_label;
+    }
+
+    boolean HandleSelectedRadioButton () {
+	string current_button = (string) UI::QueryWidget (`id (`selected_pattern), `CurrentButton);
+
+	if (current_button == "detailed") {
+	    InitTargetNow();
+	    any ret = WFM::call ("inst_packages", [`patterns]);
+
+	    // user didn't accept the pattern selector
+	    if (ret != `accept) {
+		return false;
+	    } else {
+		return true;
+	    }
+	} else if (regexpmatch (current_button, "^pattern: .*$")) {
+	    InitTargetNow();
+
+	    foreach (string pattern_neutral, all_patterns_in_selection, {
+		list <map <string,any> > current_pattern_state = Pkg::ResolvableProperties (pattern_neutral, `pattern, "");
+		if (size (current_pattern_state) == 0) {
+		    y2error ("No such pattern: %1", pattern_neutral);
+		    return;
+		}
+		Pkg::ResolvableNeutral (pattern_neutral, `pattern, (Stage::initial() ? true:false));
+	    });
+
+	    string pattern_to_select = regexpsub (current_button, "^pattern: (.*)$", "\\1");
+
+	    if (Pkg::ResolvableInstall (pattern_to_select, `pattern) == true) {
+		Pkg::PkgSolve (false);
+		return true;
+	    } else {
+		Report::Error (sformat(_("Unable to select pattern '%1'"), GetPatternLabel (pattern_to_select)));
+		return false;
+	    }
+	} else {
+	    y2error ("Unknown current button: %1", current_button);
+	    return false;
+	}
+    }
+
+    term CreateRadioButtonTerm (string pattern_name, string pattern_label, string pattern_icon) {
+	return `HBox (
+		`HWeight (
+		    1,
+		    `Right (pattern_icon == "" ? `Empty() : `Image (pattern_icon, ""))
+		),
+		`HSpacing (2),
+		`HWeight (
+		    2,
+		    `Left (`RadioButton (
+			`id (pattern_name),
+			pattern_label
+		    ))
+		)
+	    );
+    }
+
+    term term_patterns = `VBox ();
+
+    foreach (map <string, string> one_pattern, list_of_patterns, {
+	all_patterns_in_selection = add (all_patterns_in_selection, one_pattern["name"]:"");
+
+	term_patterns = add (
+	    term_patterns,
+	    CreateRadioButtonTerm (
+		sformat ("pattern: %1", one_pattern["name"]:""),
+		one_pattern["label"]:"",
+		one_pattern["icon"]:""
+	    )
+	);
+	term_patterns = add (term_patterns, `VSpacing (0.7));
+    });
+
+    term_patterns = add (term_patterns, `VSpacing (1));
+    term_patterns = add (
+	term_patterns,
+	CreateRadioButtonTerm (
+	    "detailed",
+	    _("Detailed Selection"),
+	    ""
+	)
+    );
+
+    Wizard::SetContentsButtons (
+	_("Server Pattern Selection"),
+	`RadioButtonGroup (
+	    `id (`selected_pattern),
+	    `opt (`notify),
+	    term_patterns
+	),
+	_("<p>Some help - <b>FIXME!!!!</b></p>"),
+	Label::BackButton(),
+	Label::NextButton()
+    );
+
+    Wizard::SetTitleIcon ("yast-software");
+
+    any ret = nil;
+
+    symbol dialog_ret = `next;
+
+    while (true) {
+	ret = UI::UserInput();
+
+	if (ret == `next) {
+	    dialog_ret = `next;
+	    if (HandleSelectedRadioButton()) {
+		break;
+	    } else {
+		continue;
+	    }
+	} else if (ret == `back) {
+	    dialog_ret = `back;
+	    break;
+	} else if (ret == `abort || ret == `cancel) {
+	    if (Popup::ConfirmAbort (`incomplete)) {
+		dialog_ret = `abort;
+		break;
+	    } else {
+		continue;
+	    }
+	} else {
+	    y2error ("Unhandled ret: %1", ret);
+	}
+    }
+
+    if (Mode::normal())
+	Wizard::CloseDialog();
+
+    return dialog_ret;
+}

@@ -1,0 +1,947 @@
+{
+    // Configuration
+    string migration_conf = "/etc/YaST2/slepos_migration.xml";
+
+    // Default values are defined in $migration_conf file
+    // Fallback values below
+    boolean default_do_backup = nil;
+    string default_backupdir = "";
+    string default_backupname = "";
+    integer migration_redraw_sleep = nil;
+    string migration_type = "";
+    string slepos_migration_post_script = "";
+
+    // FIXME
+    textdomain "SLEPOS";
+
+    import "FileUtils";
+    import "Wizard";
+    import "Mode";
+    import "Label";
+    import "Popup";
+    import "Sequencer";
+    import "String";
+    import "Report";
+
+    // Variables
+
+    list <map> copy_data_dirs  = [];
+    list <map> copy_data_files = [];
+
+    string backup_archive = "";
+
+    // Functions
+
+    integer size_kB = 1024;
+    integer size_MB = 1024 * 1024;
+    integer size_GB = 1024 * 1024 * 1024;
+
+    string SizeInReadableFormat (integer size_in_b) {
+	integer current = (size_in_b / size_kB);
+
+	// more than a kB
+	if (current > size_kB) {
+	    current = (size_in_b / size_MB);
+	    // more than a MB
+	    if (current > size_kB) {
+		return sformat ("%1 GB", (size_in_b / size_MB));
+	    // less than a GB
+	    } else {
+		return sformat ("%1 MB", current);
+	    }
+	// less than a kB
+	} else {
+	    return sformat ("%1 kB", current);
+	}
+    }
+
+    void ParseOneDirItem (map one_item) {
+	string source = one_item["source"]:"";
+	string destination = one_item["destination"]:"";
+
+	if (source == "") {
+	    y2error (">source< not defined %1", one_item);
+	    return;
+	}
+
+	if (destination == "") {
+	    y2error (">destination< not defined %1", one_item);
+	    return;
+	}
+
+	if (! regexpmatch (source, "/$")) {
+	    source = source + "/";
+	}
+
+	if (! regexpmatch (destination, "/$")) {
+	    destination = destination + "/";
+	}
+
+	if (! FileUtils::Exists (source)) {
+	    y2warning ("Directory '%1' doesn't exist - it will not be migrated", source);
+	    return;
+	}
+
+	copy_data_dirs = add (copy_data_dirs, $[
+	    "source" : source,
+	    "destination" : destination,
+	]);
+    }
+
+    void ParseOneFileItem (map one_item) {
+	string source = one_item["source"]:"";
+	string destination = one_item["destination"]:"";
+
+	if (source == "") {
+	    y2error (">source< not defined %1", one_item);
+	    return;
+	}
+
+	if (destination == "") {
+	    y2error (">destination< not defined %1", one_item);
+	    return;
+	}
+
+	if (! regexpmatch (destination, "/$")) {
+	    destination = destination + "/";
+	}
+
+	if (! FileUtils::Exists (source)) {
+	    y2warning ("File '%1' doesn't exist - it will not be migrated", source);
+	    return;
+	}
+
+	copy_data_files = add (copy_data_files, $[
+	    "source" : source,
+	    "destination" : destination,
+	]);
+    }
+
+    boolean ReadParseAndCheckXMLConfig () {
+	if (! FileUtils::Exists (migration_conf)) {
+	    y2error ("Can't read migration config file!");
+	    return false;
+	}
+
+	y2milestone ("Reading %1", migration_conf);
+	map <string, any> conf = (map <string, any>) SCR::Read (.xml, migration_conf);
+
+	if (migration_conf == nil) {
+	    y2error ("Can't parse migration config file!");
+	    return false;
+	}
+
+	foreach (map one_item, (list <map <string, string> >) conf["itemcopies"]:[], {
+	    if (one_item["type"]:nil == "directory") {
+		ParseOneDirItem (one_item);
+	    } else if (one_item["type"]:nil == "file") {
+		ParseOneFileItem (one_item);
+	    } else {
+		y2error ("Unknown type: %1", one_item);
+	    }
+	});
+
+	/* --- parsing configuration --- */
+
+	if (conf["config","default_backupdir"]:"" != "") {
+	    default_backupdir = conf["config","default_backupdir"]:"";
+	} else {
+	    default_backupdir = "/var/adm/backup/SLEPOS_DATA/";
+	}
+
+	if (conf["config","default_backupname"]:"" != "") {
+	    default_backupname = conf["config","default_backupname"]:"";
+	} else {
+	    default_backupname = "SLEPOS_DATA_";
+	}
+
+	if (conf["config","migration_redraw_sleep"]:0 != 0) {
+	    migration_redraw_sleep = conf["config","migration_redraw_sleep"]:50;
+	} else {
+	    migration_redraw_sleep = 50;
+	}
+
+	if (conf["config","migration_type"]:"" != "") {
+	    migration_type = conf["config","migration_type"]:"";
+	} else {
+	    migration_type = "copy";
+	}
+
+	if (conf["config","slepos_migration_post_script"]:"" != "") {
+	    slepos_migration_post_script = conf["config","slepos_migration_post_script"]:"";
+	} else {
+	    slepos_migration_post_script = "";
+	}
+
+	if (conf["config","default_do_backup"]:false != false) {
+	    default_do_backup = conf["config","default_do_backup"]:false;
+	} else {
+	    default_do_backup = false;
+	}
+
+	/* --- parsing configuration --- */
+
+	y2milestone ("Dirs to migrate:  %1", copy_data_dirs);
+	y2milestone ("Files to migrate: %1", copy_data_files);
+
+	return true;
+    }
+
+    void RedrawMigrationItems () {
+	list <term> items = [];
+
+	integer counter = -1;
+
+	foreach (map copy_data_dir, copy_data_dirs, {
+	    counter = counter + 1;
+	    items[counter] = `item (
+		`id (counter),
+		_("Directory"),
+		copy_data_dir["source"]:"",
+		copy_data_dir["destination"]:""
+	    );
+	});
+
+	foreach (map copy_data_file, copy_data_files, {
+	    counter = counter + 1;
+	    items[counter] = `item (
+		`id (counter),
+		_("File"),
+		copy_data_file["source"]:"",
+		copy_data_file["destination"]:""
+	    );
+	});
+
+	UI::ChangeWidget (`id (`migration_items), `Items, items);
+    }
+
+    void DisplayMigrationDialog () {
+	Wizard::SetContentsButtons (
+	    _("Migration Asistent"),
+	    `VBox (
+		`VSpacing (1),
+		`RadioButtonGroup (
+		    `id (`skip_or_do_migration),
+		    `VBox (
+			`Left (`RadioButton (`id (`skip_migration), `opt (`notify, `boldFont), _("&Skip Migration"))),
+			`Left (`RadioButton (`id (`do_migrate), `opt (`notify, `boldFont), _("&Do Migrate"), true))
+		    )
+		),
+		`VSpacing (1),
+		`HBox (
+		    `HSpacing (4),
+		    `VBox (
+			`id (`migration_allitems),
+			`Left (`Label (_("These directories and files will be migrated"))),
+			`Table (
+			    `id (`migration_items),
+			    `header (
+				_("Type"),
+				_("From"),
+				_("To")
+			    ),
+			    []
+			),
+			`VSpacing (0.5),
+			`Left (`PushButton (`id (`details), _("&Migration Details...")))
+		    )
+		),
+		`VStretch (),
+		`Left (`Label (_("Note: Migration can take very long time according to the current size of your data.")))
+	    ),
+	    _("<p>Some help - <b>FIXME!!!!</b></p>"),
+	    Label::BackButton(),
+	    Label::NextButton()
+	);
+
+	Wizard::SetTitleIcon ("yast-disk");
+
+	RedrawMigrationItems();
+    }
+
+    boolean ArchiveNameOK (string archive_name) {
+	// file doesn't exist, no problem with overwriting
+	if (! FileUtils::Exists (archive_name)) {
+	    return true;
+
+	// file already exists
+	} else if (FileUtils::IsFile (archive_name)) {
+	    return (Popup::AnyQuestion (
+		_("Warning"),
+		sformat(_("Archive %1 already exists.
+Do you really want to overwrite it?"), archive_name),
+		_("&Yes, Overwrite"),
+		Label::NoButton(),
+		`no
+	    ));
+
+	// file is a directory
+	} else if (FileUtils::IsDirectory (archive_name)) {
+	    Report::Error (sformat(_("Archive %1 is a directory.
+Expecting file name instead."), archive_name));
+	    return false;
+
+	// file is a socket, fifo, etc...
+	} else {
+	    Report::Error (
+		sformat (_("The file %1 is type '%2'.
+It cannot be used for creating any backup archive."), archive_name, FileUtils::GetFileType (archive_name))
+	    );
+	    return false;
+	}
+    }
+
+    void AdjustMigrationDialog () {
+	any current_button = (symbol) UI::QueryWidget (`id (`skip_or_do_migration), `CurrentButton);
+
+	if (current_button == `skip_migration) {
+	    UI::ChangeWidget (`id (`migration_allitems), `Enabled, false);
+	} else {
+	    UI::ChangeWidget (`id (`migration_allitems), `Enabled, true);
+	}
+    }
+
+    string CheckOrCreateArchiveName (string archive_name) {
+	// Archive Name is an existent directory
+	// but doesn't have a final slash
+	if (FileUtils::Exists (archive_name) && FileUtils::IsDirectory (archive_name) && !regexpmatch (archive_name, "/$")) {
+	    archive_name = archive_name + "/";
+	}
+
+	// must be a directory
+	if (regexpmatch (archive_name, "/$")) {
+	    map cmd = (map) WFM::Execute (.local.bash_output, "date +%Y%m%d-%H%M%S");
+	    list <string> a_name_list = splitstring(cmd["stdout"]:"the_latest", "\n");
+	    archive_name = archive_name + default_backupname + a_name_list[0]:"" + ".tar";
+	}
+
+	return archive_name;
+    }
+
+    void HandleDetailsDialog () {
+	if (default_do_backup && backup_archive == "") {
+	    backup_archive = default_backupdir;
+	}
+
+	UI::OpenDialog (
+	    `VBox (
+		`Heading (_("Migration Details")),
+		`VSpacing (1),
+		`Left (`Label (_("We recommend creating a backup copy of your data
+before the migration starts."))),
+		`VSpacing (1),
+		`Left (`CheckBox (`id (`do_backup), `opt (`notify), _("Create a Backup &Archive"))),
+		`HBox (
+		    `MinWidth (50, `TextEntry (`id (`backup_archive), _("Archive &Location"), backup_archive)),
+		    `HSpacing (1),
+		    `VBox (
+			`VSpacing (1),
+			`PushButton (`id (`browse), _("&Browse..."))
+		    )
+		),
+		`VSpacing (1),
+		`HBox (
+		    `PushButton (`id (`ok), Label::OKButton()),
+		    `HSpacing (2),
+		    `PushButton (`id (`cancel), Label::CancelButton())
+		)
+	    )
+	);
+
+	if (backup_archive == "") {
+	    UI::ChangeWidget (`id (`do_backup), `Value, false);
+	    UI::ChangeWidget (`id (`backup_archive), `Enabled, false);
+	} else {
+	    UI::ChangeWidget (`id (`do_backup), `Value, true);
+	    UI::ChangeWidget (`id (`backup_archive), `Enabled, true);
+	}
+
+	any ret = "";
+
+	while (true) {
+	    ret = UI::UserInput();
+
+	    if (ret == `cancel) {
+		break;
+	    } else if (ret == `ok) {
+		if ((boolean) UI::QueryWidget (`id (`do_backup), `Value)) {
+		    backup_archive = CheckOrCreateArchiveName ((string) UI::QueryWidget (`id (`backup_archive), `Value));
+
+		    if (backup_archive == "") {
+			UI::SetFocus (`backup_archive);
+			Report::Error (_("Please, select a directory or an archive file."));
+			continue;
+		    }
+		} else {
+		    backup_archive = "";
+		}
+
+		if (ArchiveNameOK (backup_archive)) break;
+
+	    // browse button pressed
+	    } else if (ret == `browse) {
+		string existdir = UI::AskForExistingDirectory (
+		    (backup_archive == "" ? default_backupdir : backup_archive),
+		    _("Backup Archive File Location")
+		);
+		UI::ChangeWidget (`id (`backup_archive), `Value, existdir);
+
+	    // checkbox "do backup" selected
+	    } else if (ret == `do_backup) {
+		boolean do_backup = (boolean) UI::QueryWidget (`id (`do_backup), `Value);
+		UI::ChangeWidget (`id (`backup_archive), `Enabled, do_backup);
+
+		// if selected to make a backup and no default backup dir is printed
+		if (do_backup && UI::QueryWidget (`id (`backup_archive), `Value) == "") {
+		    UI::ChangeWidget (`id (`backup_archive), `Value, default_backupdir);
+		}
+
+	    } else {
+		y2error ("Uknown ret: %1", ret);
+	    }
+	}
+
+	UI::CloseDialog();
+    }
+
+    symbol HandleMigrationDialog () {
+	any ret = nil;
+
+	symbol dialog_ret = `next;
+
+	while (true) {
+	    ret = UI::UserInput();
+
+	    if (ret == `back) {
+		dialog_ret = `back;
+		break;
+	    } else if (ret == `next) {
+		any current_button = (symbol) UI::QueryWidget (`id (`skip_or_do_migration), `CurrentButton);
+
+		if (current_button == `skip_migration) {
+		    y2milestone ("Migration will be skipped");
+		    dialog_ret = `skip;
+		} else {
+		    dialog_ret = `next;
+		}
+
+		break;
+	    } else if (ret == `skip_migration || ret == `do_migrate) {
+		AdjustMigrationDialog();
+	    } else if (ret == `abort) {
+		if (Mode::normal()) {
+		    if (Popup::ReallyAbort (false)) {
+			dialog_ret = `abort;
+			break;
+		    }
+		} else if (Popup::ConfirmAbort (`incomplete)) {
+		    dialog_ret = `abort;
+		    break;
+		}
+	    } else if (ret == `details) {
+		HandleDetailsDialog();
+	    } else {
+		y2error ("Unknown ret: %1", ret);
+	    }
+	}
+
+	return dialog_ret;
+    }
+
+    void DisplayMigrationProgress () {
+	Wizard::SetContentsButtons (
+	    _("Migration in Progress"),
+	    `VBox (
+		`ReplacePoint (`id (`rp_backup), `Empty ()),
+		`VSpacing (2),
+		`ReplacePoint (`id (`rp_migration), `Empty ()),
+		`VStretch ()
+	    ),
+	    _("<p>Some help - <b>FIXME!!!!</b></p>"),
+	    Label::BackButton(),
+	    Label::NextButton()
+	);
+
+	Wizard::SetTitleIcon ("yast-disk");
+    }
+
+    symbol InitialDialog () {
+	DisplayMigrationDialog();
+
+	symbol init_dialog_ret = HandleMigrationDialog();
+	y2milestone ("InitDialog: %1", init_dialog_ret);
+
+	return init_dialog_ret;
+    }
+
+    integer backup_stats_dirs  = 0;
+    integer backup_stats_files = 0;
+    string  backup_stats_show  = "";
+
+    integer backup_stats_dirs_last  = 0;
+    integer backup_stats_files_last = 0;
+
+    void UpdateBackupScreen () {
+	// no change
+	if (backup_stats_dirs == backup_stats_dirs_last && backup_stats_files == backup_stats_files_last)
+	    return;
+
+	backup_stats_dirs_last  = backup_stats_dirs;
+	backup_stats_files_last = backup_stats_files;
+
+	UI::ReplaceWidget (
+	    `id (`rp_backup),
+	    `VBox (
+		`Left (`Label (`opt (`boldFont), _("Backup statistics:"))),
+		`Left (`Label (
+		    sformat (
+			"Current: %1\nTotal directories: %2\nTotal files: %3",
+			backup_stats_show,
+			backup_stats_dirs,
+			backup_stats_files
+		    )
+		))
+	    )
+	);
+    }
+
+    void FinishBackupScreen () {
+	UI::ReplaceWidget (
+	    `id (`rp_backup),
+	    `VBox (
+		`Left (`Label (`opt (`boldFont), _("Backup statistics:"))),
+		`Left (`Label (
+		    sformat (
+			"Total directories: %1\nTotal files: %2",
+			backup_stats_dirs,
+			backup_stats_files
+		    )
+		)),
+		`Left (`Label (`opt (`boldFont), _("Done")))
+	    )
+	);
+    }
+
+    integer migrated_stats_dirs  = 0;
+    integer migrated_stats_files = 0;
+    integer migrated_stats_size  = 0;
+    string  migrated_stats_show  = "";
+
+    integer migrated_stats_dirs_last  = 0;
+    integer migrated_stats_files_last = 0;
+
+    void UpdateMigrationScreen () {
+	// no change
+	if (migrated_stats_dirs == migrated_stats_dirs_last && migrated_stats_files == migrated_stats_files_last)
+	    return;
+
+	migrated_stats_dirs_last  = migrated_stats_dirs;
+	migrated_stats_files_last = migrated_stats_files;
+
+	UI::ReplaceWidget (
+	    `id (`rp_migration),
+	    `VBox (
+		`Left (`Label (`opt (`boldFont), _("Migration statistics:"))),
+		`Left (`Label (
+		    sformat (
+			"Current: %1\nTotal files: %2\nTotal size: %3",
+			migrated_stats_show,
+			migrated_stats_files,
+			SizeInReadableFormat (migrated_stats_size)
+		    )
+		))
+	    )
+	);
+    }
+
+    void FinishMigrationScreen () {
+	UI::ReplaceWidget (
+	    `id (`rp_migration),
+	    `VBox (
+		`Left (`Label (`opt (`boldFont), _("Migration statistics:"))),
+		`Left (`Label (
+		    sformat (
+			"Total files: %1\nTotal size: %2",
+			migrated_stats_files,
+			SizeInReadableFormat (migrated_stats_size)
+		    )
+		)),
+		`Left (`Label (`opt (`boldFont), _("Done")))
+	    )
+	);
+    }
+
+    void AbortedMigrationScreen () {
+	UI::ReplaceWidget (
+	    `id (`rp_migration),
+	    `VBox (
+		`Left (`Label (`opt (`boldFont), _("Migration statistics:"))),
+		`Left (`Label (
+		    sformat (
+			"Total files: %1",
+			migrated_stats_files
+		    )
+		)),
+		`Left (`Label (`opt (`boldFont), _("Aborted")))
+	    )
+	);
+    }
+
+    boolean AbortBackup (any widget_id) {
+	if (widget_id != `abort) return false;
+
+	if (Mode::normal()) {
+	    return Popup::ReallyAbort (false);
+	} else {
+	    return Popup::ConfirmAbort (`incomplete);
+	}
+    }
+
+    boolean AbortMigration (any widget_id) {
+	if (widget_id != `abort) return false;
+
+	if (Mode::normal()) {
+	    return Popup::ReallyAbort (false);
+	} else {
+	    return Popup::ConfirmAbort (`incomplete);
+	}
+    }
+
+    boolean CreateBackupArchive () {
+	UI::ReplaceWidget (
+	    `id (`rp_backup),
+	    `Left (`Label (_("Creating backup archive...")))
+	);
+
+	string list_of_files_and_dirs = "";
+	string one_item = "";
+
+	// dirs at first
+	foreach (map copy_data_dir, copy_data_dirs, {
+	    one_item = copy_data_dir["source"]:"";
+
+	    if (one_item == "") {
+		y2error ("Invalid 'source': %1", copy_data_dir);
+		return;
+	    }
+
+	    list_of_files_and_dirs = list_of_files_and_dirs + sformat (" '%1'", String::Quote (one_item));
+	});
+
+	// then files
+	foreach (map copy_data_file, copy_data_files, {
+	    one_item = copy_data_file["source"]:"";
+
+	    if (one_item == "") {
+		y2error ("Invalid 'source': %1", copy_data_file);
+		return;
+	    }
+
+	    list_of_files_and_dirs = list_of_files_and_dirs + sformat (" '%1'", String::Quote (one_item));
+	});
+
+	if (list_of_files_and_dirs == "") {
+	    y2milestone ("Nothing to backup");
+	    return false;
+	}
+
+	// at first the target directory needs to be created if it doesn't exist
+	string archive_dir = backup_archive;
+	integer position = findlastof (archive_dir, "/");
+	archive_dir = substring (archive_dir, 0, position + 1);
+
+	string cmd = sformat (
+	    "mkdir -p '%1'; tar -cvSf '%2' %3",
+	    String::Quote (archive_dir),
+	    String::Quote (backup_archive),
+	    list_of_files_and_dirs
+	);
+	y2milestone ("Executing: %1", cmd);
+
+	SCR::Execute(.background.run_output_err, cmd);
+
+	backup_stats_dirs  = 0;
+	backup_stats_files = 0;
+	backup_stats_show = "";
+
+	while ((boolean) SCR::Read(.background.output_open) || (boolean) (SCR::Read(.background.newlines) > 0)) {
+	    any widget_id = UI::PollInput();
+
+	    if (AbortBackup(widget_id)) {
+		integer kill_count = 10;
+		while (kill_count > 0) {
+		    kill_count = kill_count - 1;
+		    if ((boolean) SCR::Execute (.background.kill)) break;
+		    sleep (1000);
+		}
+	    }
+
+	    if ((integer) SCR::Read (.background.newlines) > 0) {
+		list <string> lines = (list <string>) SCR::Read (.background.newout);
+
+		foreach (string line, lines, {
+		    if (regexpmatch (line, "/$")) {
+			backup_stats_dirs = backup_stats_dirs + 1;
+		    } else {
+			backup_stats_files = backup_stats_files + 1;
+		    }
+		    backup_stats_show = line;
+		});
+	    }
+
+	    UpdateBackupScreen ();
+	    sleep (migration_redraw_sleep);
+	}
+
+	FinishBackupScreen ();
+	y2milestone ("Result: %1", SCR::Read (.background.status));
+
+	return true;
+    }
+
+    boolean migration_aborted = false;
+
+    boolean MigrateFromTo (string source, string target) {
+	if (source == "") {
+	    y2error ("Invalid 'source': %1", source);
+	    return false;
+	}
+
+	if (target == "") {
+	    y2error ("Invalid 'target': %1", target);
+	    return false;
+	}
+
+	// '/tmp/aaa/' -> '/tmp/aaa/.'
+	if (regexpmatch (source, "/$")) source = source + ".";
+
+	string cmd = "";
+	if (migration_type == "move") {
+	    cmd = sformat (
+		"mkdir -p '%2'; mv -vf '%1' '%2'",
+		String::Quote (source),
+		String::Quote (target)
+	    );
+	} else {
+	    cmd = sformat (
+		"mkdir -p '%2'; cp -avrf '%1' '%2'",
+		String::Quote (source),
+		String::Quote (target)
+	    );
+	}
+
+	y2milestone ("Executing: %1", cmd);
+
+	SCR::Execute(.background.run_output_err, cmd);
+
+	string target_filename = "";
+
+	while ((boolean) SCR::Read (.background.output_open) || (boolean) (SCR::Read (.background.newlines) > 0)) {
+	    any widget_id = UI::PollInput();
+
+	    if (AbortMigration (widget_id)) {
+		migration_aborted = true;
+		integer kill_count = 10;
+		while (kill_count > 0) {
+		    kill_count = kill_count - 1;
+		    if ((boolean) SCR::Execute (.background.kill)) break;
+		    sleep (1000);
+		}
+	    }
+
+	    if ((integer) SCR::Read (.background.newlines) > 0) {
+		list <string> lines = (list <string>) SCR::Read (.background.newout);
+
+		foreach (string line, lines, {
+		    if (regexpmatch (line, "^`.*' -> `.*'$")) {
+			target_filename = line;
+			target_filename = regexpsub (line, "^`.*' -> `(.*)'$", "\\1");
+			migrated_stats_size = migrated_stats_size + (integer) SCR::Read (.target.size, target_filename);
+
+			line = regexpsub (line, "^`(.*) -> `.*'$", "\\1");
+		    } else if (regexpmatch (line, "^removed `.*'$")) {
+			return;
+		    } else {
+			y2error ("Unknown line type: >%1<", line);
+		    }
+
+		    if (regexpmatch (line, "/$")) {
+			migrated_stats_dirs = migrated_stats_dirs + 1;
+		    } else {
+			migrated_stats_files = migrated_stats_files + 1;
+		    }
+
+		    migrated_stats_show = line;
+		});
+	    }
+
+	    UpdateMigrationScreen ();
+	    sleep (migration_redraw_sleep);
+	}
+
+	y2milestone ("Result: %1", SCR::Read (.background.status));
+    }
+
+    boolean MigrateData () {
+	UI::ReplaceWidget (
+	    `id (`rp_migration),
+	    `Left (`Label (_("Migrating data...")))
+	);
+
+	migrated_stats_dirs  = 0;
+	migrated_stats_files = 0;
+	migrated_stats_show  = "";
+
+	string source = "";
+	string target = "";
+
+	migration_aborted = false;
+
+	// dirs at first
+	foreach (map copy_data_dir, copy_data_dirs, {
+	    if (migration_aborted) {
+		y2milestone ("Aborted!");
+		break;
+	    }
+
+	    source = copy_data_dir["source"]:"";
+	    target = copy_data_dir["destination"]:"";
+
+	    y2milestone ("Migrating: %1", copy_data_dir);
+	    MigrateFromTo (source, target);
+	});
+
+	// then files
+	foreach (map copy_data_file, copy_data_files, {
+	    if (migration_aborted) {
+		y2milestone ("Aborted!");
+		break;
+	    }
+
+	    source = copy_data_file["source"]:"";
+	    target = copy_data_file["destination"]:"";
+
+	    y2milestone ("Migrating: %1", copy_data_file);
+	    MigrateFromTo (source, target);
+	});
+
+	if (migration_aborted) {
+	    AbortedMigrationScreen ();
+	} else {
+	    FinishMigrationScreen ();
+	    sleep (3000);
+	}
+
+	return (migration_aborted == false);
+    }
+
+    symbol MigrationDialog () {
+	DisplayMigrationProgress();
+
+	Wizard::DisableBackButton();
+	Wizard::DisableNextButton();
+	Wizard::EnableAbortButton();
+
+	if (backup_archive != "") {
+	    CreateBackupArchive();
+	}
+
+	MigrateData();
+
+	Wizard::DisableAbortButton();
+	Wizard::EnableBackButton();
+	Wizard::EnableNextButton();
+
+	any ret = "";
+	symbol dialog_ret = `next;
+
+	while (true) {
+	    ret = UI::UserInput();
+
+	    if (ret == `back) {
+		dialog_ret = `back;
+		break;
+	    } else if (ret == `next) {
+		dialog_ret = `next;
+		break;
+	    // e.g., `cancel
+	    } else {
+		y2error ("Unknow ret: %1", ret);
+	    }
+	}
+
+	Wizard::EnableAbortButton();
+
+	return dialog_ret;
+    }
+
+    symbol MigrationPostScript () {
+	if (! FileUtils::Exists (slepos_migration_post_script)) {
+	    y2warning ("Script '%1' doesn't exist, skipping...", slepos_migration_post_script);
+	    return `next;
+	}
+
+	Wizard::SetContentsButtons (
+	    _("Migration Asistent"),
+	    `VBox (
+		`Label (_("Running post-migration script..."))
+	    ),
+	    _("<p>Some help - <b>FIXME!!!!</b></p>"),
+	    Label::BackButton(),
+	    Label::NextButton()
+	);
+
+	Wizard::DisableAbortButton();
+	Wizard::SetTitleIcon ("yast-disk");
+
+	y2milestone ("Running: %1", slepos_migration_post_script);
+	map cmd = (map) SCR::Execute (.target.bash_output, slepos_migration_post_script);
+	y2milestone ("Ret: %1", cmd);
+
+	Wizard::EnableAbortButton();
+
+	return `next;
+    }
+
+    // main()
+
+    map aliases = $[
+	"initial"	: ``( InitialDialog () ),
+	"migrate"	: ``( MigrationDialog() ),
+	"postscript"	: ``( MigrationPostScript() ),
+    ];
+
+    map sequence = $[
+	"ws_start"	: "initial",
+	"initial"	: $[
+	    `next	: "migrate",
+	    `skip	: `next,
+	    `abort	: `abort,
+	],
+	"migrate"	: $[
+	    `next	: "postscript",
+	    `abort	: `abort,
+	],
+	"postscript"	: $[
+	    `next	: `next,
+	    `abort	: `abort,
+	],
+    ];
+
+    Wizard::CreateDialog();
+
+    if (! ReadParseAndCheckXMLConfig()) {
+	Report::Error (sformat (
+	    _("Unable to read migration configuration from %1"),
+	    migration_conf
+	));
+	return `next;
+    }
+
+    any ret = Sequencer::Run (aliases, sequence);
+    y2milestone ("Sequencer::Run %1", ret);
+
+    Wizard::CloseDialog();
+
+    return (symbol) ret;
+}
