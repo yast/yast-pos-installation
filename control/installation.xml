@@ -5,6 +5,8 @@
 
     <workflows config:type="list">
 
+	<!-- Workflow for the Add-On installation
+	     on a running system -->
         <workflow>
             <defaults>
                 <enable_back>no</enable_back>
@@ -38,7 +40,9 @@
     </workflows>
 
     <update>
+
 	<workflows config:type="list">
+	    <!-- Workflow for the Update process -->
 	    <workflow>
         	<defaults>
             	    <enable_back>yes</enable_back>
@@ -57,11 +61,41 @@
 			    <module>
 				<label>Data Migration</label>
 				<name>slepos_data_migration</name>
+                		<enable_back>yes</enable_back>
+                		<enable_next>yes</enable_next>
 			    </module>
 			</modules>
 		    </insert_module>
 		</insert_modules>
     	    </workflow>
+
+	    <!-- Workflow for the New installation - First Stage -->
+	    <workflow>
+        	<defaults>
+            	    <enable_back>yes</enable_back>
+            	    <enable_next>yes</enable_next>
+        	</defaults>
+
+		<!-- First Stage - Installation -->
+        	<stage>initial</stage>
+        	<mode>installation</mode>
+
+		<!-- Installation: Insert -->
+		<insert_modules config:type="list">
+		    <insert_module>
+			<before>proposal</before>
+			<modules config:type="list">
+			    <module>
+				<label>Server Type Selection</label>
+				<name>slepos_server_selection</name>
+                		<enable_back>yes</enable_back>
+                		<enable_next>yes</enable_next>
+			    </module>
+			</modules>
+		    </insert_module>
+		</insert_modules>
+    	    </workflow>
+
 	</workflows>
     </update>
 </productDefines>
