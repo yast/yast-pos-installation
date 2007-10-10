@@ -196,6 +196,7 @@
 	    counter = counter + 1;
 	    items[counter] = `item (
 		`id (counter),
+		// TRANSLATORS: Table item (file type)
 		_("Directory"),
 		copy_data_dir["source"]:"",
 		copy_data_dir["destination"]:""
@@ -206,6 +207,7 @@
 	    counter = counter + 1;
 	    items[counter] = `item (
 		`id (counter),
+		// TRANSLATORS: Table item (file type)
 		_("File"),
 		copy_data_file["source"]:"",
 		copy_data_file["destination"]:""
@@ -217,13 +219,16 @@
 
     void DisplayMigrationDialog () {
 	Wizard::SetContentsButtons (
+	    // TRANSLATORS: Dialog caption
 	    _("Migration Asistent"),
 	    `VBox (
 		`VSpacing (1),
 		`RadioButtonGroup (
 		    `id (`skip_or_do_migration),
 		    `VBox (
+			// TRANSLATORS: Radio button
 			`Left (`RadioButton (`id (`skip_migration), `opt (`notify, `boldFont), _("&Skip Migration"))),
+			// TRANSLATORS: Radio button
 			`Left (`RadioButton (`id (`do_migrate), `opt (`notify, `boldFont), _("&Do Migrate"), true))
 		    )
 		),
@@ -232,23 +237,30 @@
 		    `HSpacing (4),
 		    `VBox (
 			`id (`migration_allitems),
+			// TRANSLATORS: informative text
 			`Left (`Label (_("These directories and files will be migrated"))),
 			`Table (
 			    `id (`migration_items),
 			    `header (
+				// TRANSLATORS: Table header item
 				_("Type"),
+				// TRANSLATORS: Table header item
 				_("From"),
+				// TRANSLATORS: Table header item
 				_("To")
 			    ),
 			    []
 			),
 			`VSpacing (0.5),
+			// TRANSLATORS: Push button
 			`Left (`PushButton (`id (`details), _("&Migration Details...")))
 		    )
 		),
 		`VStretch (),
+		// TRANSLATORS: informative text
 		`Left (`Label (_("Note: Migration can take very long time according to the current size of your data.")))
 	    ),
+	    // TRANSLATORS: Dialog help
 	    _("<p>Some help - <b>FIXME!!!!</b></p>"),
 	    Label::BackButton(),
 	    Label::NextButton()
@@ -267,9 +279,12 @@
 	// file already exists
 	} else if (FileUtils::IsFile (archive_name)) {
 	    return (Popup::AnyQuestion (
+		// TRANSLATORS: Pop-up dialog caption
 		_("Warning"),
+		// TRANSLATORS: Warning dialog message, %1 is replaced with a filename
 		sformat(_("Archive %1 already exists.
 Do you really want to overwrite it?"), archive_name),
+		// TRANSLATORS: Push button
 		_("&Yes, Overwrite"),
 		Label::NoButton(),
 		`no
@@ -277,6 +292,7 @@ Do you really want to overwrite it?"), archive_name),
 
 	// file is a directory
 	} else if (FileUtils::IsDirectory (archive_name)) {
+	    // TRANSLATORS: Error pop-up message, %1 is replaced with a filename
 	    Report::Error (sformat(_("Archive %1 is a directory.
 Expecting file name instead."), archive_name));
 	    return false;
@@ -284,6 +300,8 @@ Expecting file name instead."), archive_name));
 	// file is a socket, fifo, etc...
 	} else {
 	    Report::Error (
+		// TRANSLATORS: Error pop-up message, %1 is replaced with a file name
+		// %2 is replaced with a file name type
 		sformat (_("The file %1 is type '%2'.
 It cannot be used for creating any backup archive."), archive_name, FileUtils::GetFileType (archive_name))
 	    );
@@ -325,17 +343,22 @@ It cannot be used for creating any backup archive."), archive_name, FileUtils::G
 
 	UI::OpenDialog (
 	    `VBox (
+		// TRANSLATORS: Pop-up dialog caption
 		`Heading (_("Migration Details")),
 		`VSpacing (1),
+		// TRANSLATORS: Informative text
 		`Left (`Label (_("We recommend creating a backup copy of your data
 before the migration starts."))),
 		`VSpacing (1),
+		// TRANSLATORS: Check box
 		`Left (`CheckBox (`id (`do_backup), `opt (`notify), _("Create a Backup &Archive"))),
 		`HBox (
+		    // TRANSLATORS: Text entry
 		    `MinWidth (50, `TextEntry (`id (`backup_archive), _("Archive &Location"), backup_archive)),
 		    `HSpacing (1),
 		    `VBox (
 			`VSpacing (1),
+			// TRANSLATORS: Push button
 			`PushButton (`id (`browse), _("&Browse..."))
 		    )
 		),
@@ -369,6 +392,7 @@ before the migration starts."))),
 
 		    if (backup_archive == "") {
 			UI::SetFocus (`backup_archive);
+			// TRANSLATORS: Error message
 			Report::Error (_("Please, select a directory or an archive file."));
 			continue;
 		    }
@@ -382,6 +406,7 @@ before the migration starts."))),
 	    } else if (ret == `browse) {
 		string existdir = UI::AskForExistingDirectory (
 		    (backup_archive == "" ? default_backupdir : backup_archive),
+		    // TRANSLATORS: File-browse dialog caption
 		    _("Backup Archive File Location")
 		);
 		UI::ChangeWidget (`id (`backup_archive), `Value, existdir);
@@ -450,6 +475,7 @@ before the migration starts."))),
 
     void DisplayMigrationProgress () {
 	Wizard::SetContentsButtons (
+	    // TRANSLATORS: Dialog caption
 	    _("Migration in Progress"),
 	    `VBox (
 		`ReplacePoint (`id (`rp_backup), `Empty ()),
@@ -457,6 +483,7 @@ before the migration starts."))),
 		`ReplacePoint (`id (`rp_migration), `Empty ()),
 		`VStretch ()
 	    ),
+	    // TRANSLATORS: Dialog help
 	    _("<p>Some help - <b>FIXME!!!!</b></p>"),
 	    Label::BackButton(),
 	    Label::NextButton()
@@ -492,10 +519,15 @@ before the migration starts."))),
 	UI::ReplaceWidget (
 	    `id (`rp_backup),
 	    `VBox (
+		// TRANSLATORS: Dialog informative text
 		`Left (`Label (`opt (`boldFont), _("Backup statistics:"))),
 		`Left (`Label (
 		    sformat (
-			"Current: %1\nTotal directories: %2\nTotal files: %3",
+			// TRANSLATORS: Dialog informative text
+			// %1 is replaced with the current file name just being archived
+			// %2 is replaced with total number of directories archived
+			// %3 is replaced with total number of files archived
+			_("Current: %1\nTotal directories: %2\nTotal files: %3"),
 			backup_stats_show,
 			backup_stats_dirs,
 			backup_stats_files
@@ -509,14 +541,19 @@ before the migration starts."))),
 	UI::ReplaceWidget (
 	    `id (`rp_backup),
 	    `VBox (
+		// TRANSLATORS: Dialog informative text
 		`Left (`Label (`opt (`boldFont), _("Backup statistics:"))),
 		`Left (`Label (
 		    sformat (
-			"Total directories: %1\nTotal files: %2",
+			// TRANSLATORS: Dialog informative text
+			// %1 is replaced with total number of directories archived
+			// %2 is replaced with total number of files archived
+			_("Total directories: %1\nTotal files: %2"),
 			backup_stats_dirs,
 			backup_stats_files
 		    )
 		)),
+		// TRANSLATORS: Dialog informative text (progress)
 		`Left (`Label (`opt (`boldFont), _("Done")))
 	    )
 	);
@@ -541,10 +578,15 @@ before the migration starts."))),
 	UI::ReplaceWidget (
 	    `id (`rp_migration),
 	    `VBox (
+		// TRANSLATORS: informative text (headline)
 		`Left (`Label (`opt (`boldFont), _("Migration statistics:"))),
 		`Left (`Label (
 		    sformat (
-			"Current: %1\nTotal files: %2\nTotal size: %3",
+			// TRANSLATORS: Dialog informative text
+			// %1 is replaced with the current file name just being migrated
+			// %2 is replaced with total number of files migrated
+			// %3 is replaced with total size of files migrated
+			_("Current: %1\nTotal files: %2\nTotal size: %3"),
 			migrated_stats_show,
 			migrated_stats_files,
 			SizeInReadableFormat (migrated_stats_size)
@@ -558,14 +600,19 @@ before the migration starts."))),
 	UI::ReplaceWidget (
 	    `id (`rp_migration),
 	    `VBox (
+		// TRANSLATORS: informative text (headline)
 		`Left (`Label (`opt (`boldFont), _("Migration statistics:"))),
 		`Left (`Label (
 		    sformat (
-			"Total files: %1\nTotal size: %2",
+			// TRANSLATORS: Dialog informative text
+			// %1 is replaced with total number of files migrated
+			// %2 is replaced with total size of files migrated
+			_("Total files: %1\nTotal size: %2"),
 			migrated_stats_files,
 			SizeInReadableFormat (migrated_stats_size)
 		    )
 		)),
+		// TRANSLATORS: Dialog informative text (progress)
 		`Left (`Label (`opt (`boldFont), _("Done")))
 	    )
 	);
@@ -575,13 +622,15 @@ before the migration starts."))),
 	UI::ReplaceWidget (
 	    `id (`rp_migration),
 	    `VBox (
+		// TRANSLATORS: informative text (headline)
 		`Left (`Label (`opt (`boldFont), _("Migration statistics:"))),
 		`Left (`Label (
 		    sformat (
-			"Total files: %1",
+			_("Total files: %1"),
 			migrated_stats_files
 		    )
 		)),
+		// TRANSLATORS: Dialog informative text (progress)
 		`Left (`Label (`opt (`boldFont), _("Aborted")))
 	    )
 	);
@@ -610,6 +659,7 @@ before the migration starts."))),
     boolean CreateBackupArchive () {
 	UI::ReplaceWidget (
 	    `id (`rp_backup),
+	    // TRANSLATORS: Dialog informative text (progress)
 	    `Left (`Label (_("Creating backup archive...")))
 	);
 
@@ -785,6 +835,7 @@ before the migration starts."))),
     boolean MigrateData () {
 	UI::ReplaceWidget (
 	    `id (`rp_migration),
+	    // TRANSLATORS: Dialog informative text (progress)
 	    `Left (`Label (_("Migrating data...")))
 	);
 
@@ -882,10 +933,13 @@ before the migration starts."))),
 	}
 
 	Wizard::SetContentsButtons (
+	    // TRANSLATORS: Dialog caption
 	    _("Migration Asistent"),
 	    `VBox (
+		// TRANSLATORS: Dialog informative text (progress)
 		`Label (_("Running post-migration script..."))
 	    ),
+	    // TRANSLATORS: Dialog help
 	    _("<p>Some help - <b>FIXME!!!!</b></p>"),
 	    Label::BackButton(),
 	    Label::NextButton()
@@ -932,6 +986,7 @@ before the migration starts."))),
 
     if (! ReadParseAndCheckXMLConfig()) {
 	Report::Error (sformat (
+	    // TRANSLATORS: Pop-up error message
 	    _("Unable to read migration configuration from %1"),
 	    migration_conf
 	));
