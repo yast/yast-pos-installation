@@ -23,5 +23,5 @@ YaST POS Installation - controls the pos installation and upgrade
 %defattr(-,root,root)
 @clientdir@/*.ycp
 @desktopdir@/*.desktop
-/etc/YaST2/*
+/etc/SLEPOS/*
 %doc @docdir@

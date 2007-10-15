@@ -1,6 +1,6 @@
 {
     // Configuration
-    string migration_conf = "/etc/YaST2/slepos_migration.xml";
+    string migration_conf = "/etc/SLEPOS/slepos_migration.xml";
 
     // Default values are defined in $migration_conf file
     // Fallback values below
@@ -261,7 +261,7 @@
 		`Left (`Label (_("Note: Migration can take very long time according to the current size of your data.")))
 	    ),
 	    // TRANSLATORS: Dialog help
-	    _("<p>Some help - <b>FIXME!!!!</b></p>"),
+	    _("<p>Some help - <b>FIXME Text1!!!!</b></p>"),
 	    Label::BackButton(),
 	    Label::NextButton()
 	);
@@ -484,7 +484,7 @@ before the migration starts."))),
 		`VStretch ()
 	    ),
 	    // TRANSLATORS: Dialog help
-	    _("<p>Some help - <b>FIXME!!!!</b></p>"),
+	    _("<p>Some help - <b>FIXME Text2!!!!</b></p>"),
 	    Label::BackButton(),
 	    Label::NextButton()
 	);
@@ -492,8 +492,20 @@ before the migration starts."))),
 	Wizard::SetTitleIcon ("yast-disk");
     }
 
+    void SetMigrationDialogInit () {
+	if (size (copy_data_dirs) > 0 || size (copy_data_files) > 0) {
+	    y2milestone ("Something to be migrated");
+	    UI::ChangeWidget (`id (`skip_or_do_migration), `CurrentButton, `do_migrate);
+	} else {
+	    y2warning ("Nothing to migrate");
+	    UI::ChangeWidget (`id (`skip_or_do_migration), `CurrentButton, `skip_migration);
+	}
+	AdjustMigrationDialog();
+    }
+
     symbol InitialDialog () {
 	DisplayMigrationDialog();
+	SetMigrationDialogInit();
 
 	symbol init_dialog_ret = HandleMigrationDialog();
 	y2milestone ("InitDialog: %1", init_dialog_ret);
@@ -940,7 +952,7 @@ before the migration starts."))),
 		`Label (_("Running post-migration script..."))
 	    ),
 	    // TRANSLATORS: Dialog help
-	    _("<p>Some help - <b>FIXME!!!!</b></p>"),
+	    _("<p>Some help - <b>FIXME Text3!!!!</b></p>"),
 	    Label::BackButton(),
 	    Label::NextButton()
 	);

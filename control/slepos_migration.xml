@@ -3,13 +3,13 @@
     xmlns:config="http://www.suse.com/1.0/configns">
     <config>
 	<!-- Default archive location -->
-	<default_backupdir>/var/adm/backup/SLEPOS_DATA/</default_backupdir>
+	<default_backupdir>/var/lib/SLEPOS/backup/</default_backupdir>
 
 	<!-- Default archive name -->
-	<default_backupname>SLEPOS_DATA_</default_backupname>
+	<default_backupname>NLPOS9_DATA_</default_backupname>
 
 	<!-- Defines whether backup is selected by default -->
-	<default_do_backup config:type="boolean">false</default_do_backup>
+	<default_do_backup config:type="boolean">true</default_do_backup>
 
 	<!-- UI sleep in msecs -->
 	<migration_redraw_sleep config:type="integer">50</migration_redraw_sleep>
@@ -22,58 +22,35 @@
     </config>
 
     <itemcopies config:type="list">
-
 	<itemcopy>
+          <!-- tftpboot directory changed because of FHS -->
 	    <type>directory</type>
-	    <source>/yast/test/XML</source>
-	    <destination>/srv/SLEPOS/1/</destination>
-	</itemcopy>
-
-	<itemcopy>
-	    <type>directory</type>
-	    <source>/yast/Botanicka</source>
-	    <destination>/srv/SLEPOS/15/</destination>
+	    <source>/tftpboot</source>
+	    <destination>/srv/tftpboot</destination>
 	</itemcopy>
 
 	<itemcopy>
 	    <type>directory</type>
-	    <source>/yast/CODE11/SL_11.0/zypp/</source>
-	    <!-- Destination is always directory! -->
-	    <destination>/srv/SLEPOS/2/</destination>
+            <!-- directory used by rsync service for network synchronization -->
+	    <source>/opt/SLES/POS/rsync</source>
+	    <destination>/srv/SLEPOS</destination>
 	</itemcopy>
 
 	<itemcopy>
-	    <type>file</type>
-	    <source>/yast/CODE11/Alpha6Test.xml</source>
-	    <!-- Destination is always directory! -->
-	    <destination>/srv/SLEPOS/3</destination>
+	    <type>directory</type>
+            <!-- all images from nlpos9 will be saved to special location, no directly in kiwi image folder  though! -->
+	    <source>from /opt/SLES/POS/system to </source>
+	    <destination>/var/lib/SLEPOS/system/nlpos9_images</destination>
 	</itemcopy>
 
-	<itemcopy>
+	<!--<itemcopy>
 	    <type>file</type>
 	    <source>/yast/docs/Behavioral_Indicators_Release_2.3</source>
-	    <!-- Destination is always directory! -->
+	    
 	    <destination>/srv/SLEPOS/4/</destination>
-	</itemcopy>
+	</itemcopy>-->
 
-	<itemcopy>
-	    <type>directory</type>
-	    <source>/tmp/some/missing/dir</source>
-	    <destination>/srv/SLEPOS/5/</destination>
-	</itemcopy>
-
-	<!-- Erroneous -->
-	<itemcopy>
-	    <type>directory</type>
-	    <destination>/srv/SLEPOS/12/</destination>
-	</itemcopy>
-
-	<!-- Erroneous -->
-	<itemcopy>
-	    <type>dyrectori</type>
-	    <source>/tmp/</source>
-	    <destination>/tmp/</destination>
-	</itemcopy>
+	
 
     </itemcopies>
 </migrate>

@@ -2,7 +2,7 @@
 #
 SUBDIRS = 
 
-controldir = /etc/YaST2
+controldir = /etc/SLEPOS
 
 control_DATA = slepos_migration.xml
 

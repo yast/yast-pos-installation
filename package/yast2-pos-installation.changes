@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon Oct 15 12:38:05 CEST 2007 - locilka@suse.cz
+
+- Changing location of migration control file to /etc/SLEPOS.
+- Adding real-data migration configuration.
+- Proposing to skip migration if nothing to migrate is available.
+- 2.13.2
+
+-------------------------------------------------------------------
 Mon Oct 15 08:42:43 CEST 2007 - locilka@suse.cz
 
 - Renamed scripts *.ycp to inst_*.ycp (#333495)
