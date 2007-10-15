@@ -17,11 +17,14 @@ YaST POS Installation - controls the pos installation and upgrade
 
 @INSTALL@
 
+mkdir -p "$RPM_BUILD_ROOT"/etc/SLEPOS
+
 @CLEAN@
 
 %files
 %defattr(-,root,root)
 @clientdir@/*.ycp
 @desktopdir@/*.desktop
+%dir /etc/SLEPOS
 /etc/SLEPOS/*
 %doc @docdir@
