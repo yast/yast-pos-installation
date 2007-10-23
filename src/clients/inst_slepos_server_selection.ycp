@@ -13,6 +13,9 @@
     import "Report";
     import "Stage";
     import "PackageCallbacks";
+    import "Directory";
+    import "String";
+    import "FileUtils";
 
     if (Mode::normal())
 	Wizard::CreateDialog();
@@ -38,6 +41,20 @@
 	],
     ];
 
+    /**
+     * Describes mapping of old selections to new patterns for the upgrade case.
+     *
+     * @struct $[
+     *   "selection_name" : [ "list", "of", "new", "patterns", ... ],
+     *   ...
+     * ]
+     */
+    map <string, list <string> > selections_to_patterns = $[
+	"SLRS-Server"		: [ "SLEPOS_Server_Admin", "SLEPOS_Server_Branch" ],
+	"SLRS_Image"		: [ "SLEPOS_Image" ],
+	"SLRS_Image_Server"	: [ "SLEPOS_Image_Server" ],
+    ];
+
     list <string> all_patterns_in_selection = [];
 
     void InitTargetNow () {
@@ -58,11 +75,128 @@
 	return pattern_label;
     }
 
+    string already_proposed = Directory::tmpdir + "/SLEPOS_upgrade_already_proposed";
+
+    void ProposeUpgrade () {
+        if (FileUtils::Exists (already_proposed)) {
+            y2milestone ("Already proposed");
+	    return;
+        } else {
+            y2milestone ("Proposing upgrade");
+            SCR::Execute (.target.bash, sformat ("touch '%1'", String::Quote (already_proposed)));
+        }
+
+        string selections_stored_in = Installation::destdir + "/var/adm/YaST/SelDB/";
+
+        list <string> selections_in_use = [];
+        if (FileUtils::Exists (selections_stored_in)) {
+            selections_in_use = (list <string>) SCR::Read (.target.dir, selections_stored_in);
+            y2milestone ("Selections currently in use: %1", selections_in_use);
+        } else {
+            y2warning ("Directory %1 doesn't exist", selections_stored_in);
+        }
+
+	boolean need_to_solve = false;;
+
+	// check all selections in use
+        foreach (string one_selection, selections_in_use, {
+            if (! regexpmatch (one_selection, "^.*\.sel$")) {
+                y2warning ("Not a selection: %1", one_selection);
+                return;
+            }
+
+            one_selection = regexpsub (one_selection, "^(.*)\.sel$", "\\1");
+
+	    // there's no need to handle that selection
+	    if (! haskey (selections_to_patterns, one_selection)) return;
+
+	    list <string> patterns_affected = selections_to_patterns[one_selection]:[];
+
+	    // internal error, wrong definition
+	    if (patterns_affected == [] || patterns_affected == nil) {
+		y2error ("Wrong definition of patterns affected! %1", patterns_affected);
+		return;
+	    }
+
+	    foreach (string one_pattern_name, patterns_affected, {
+		if (one_pattern_name == nil || one_pattern_name == "") {
+		    y2error ("Wrong pattern for %1 -> %2", one_selection, one_pattern_name);
+		    return;
+		}
+
+		list <map <string,any> > current_pattern_state = Pkg::ResolvableProperties (one_pattern_name, `pattern, "");
+
+		// pattern is known
+		if (size (current_pattern_state) > 0) {
+		    y2milestone ("Preselecting pattern: %1", one_pattern_name);
+		    Pkg::ResolvableInstall (one_pattern_name, `pattern);
+		// no such pattern
+		} else {
+		    y2error ("No such pattern available %1", one_pattern_name);
+		}
+	    });
+        });
+
+	if (need_to_solve) {
+	    y2milestone ("Some patterns were selected...");
+	    Pkg::PkgSolve (false);
+	}
+    }
+
+    void InitSelectedRadioButton () {
+	// check all patterns visible in the dialog
+	// if more then one (of them) pattern is selected, select "detailed"
+	// otherwise preselect that only one pattern in dialog
+	list <string> already_selected_patterns = [];
+	string one_pattern_name = "";
+
+	foreach (map <string, string> one_pattern, list_of_patterns, {
+	    one_pattern_name = one_pattern["name"]:"";
+
+	    if (one_pattern_name == "" || one_pattern_name == nil) {
+		y2error ("Wrong pattern definition: %1", one_pattern);
+		return;
+	    }
+
+	    list <map <string,any> > current_pattern_state = Pkg::ResolvableProperties (one_pattern["name"]:"", `pattern, "");
+	    current_pattern_state = filter (map <string,any> one_pattern, current_pattern_state, {
+		// `selected (for installation) or already `installed
+		return (one_pattern["status"]:nil == `installed || one_pattern["status"]:nil == `selected);
+	    });
+
+	    if (size (current_pattern_state) > 1) {
+		y2warning ("More patterns matching: %1", current_pattern_state);
+	    } else if (size (current_pattern_state) == 0) {
+		y2warning ("No pattern matching %1", one_pattern["name"]:"");
+		return;
+	    }
+
+	    foreach (map <string,any> one_pattern, current_pattern_state, {
+		string one_pattern_name = one_pattern["name"]:"";
+
+		if (one_pattern_name != "" && one_pattern_name != nil) {
+		    already_selected_patterns = add (already_selected_patterns, one_pattern_name);
+		} else {
+		    y2error ("No 'name' defined: %1", one_pattern);
+		}
+	    });
+	});
+
+	if (size (already_selected_patterns) > 1) {
+	    y2milestone ("More than one pattern selected: %1, preselecting 'detailed'", already_selected_patterns);
+	    UI::ChangeWidget (`id (`selected_pattern), `CurrentButton, "detailed");
+	} else if (size (already_selected_patterns) == 1) {
+	    y2milestone ("Only one pattern selected: %1", already_selected_patterns);
+	    UI::ChangeWidget (`id (`selected_pattern), `CurrentButton, sformat("pattern: %1", already_selected_patterns[0]:""));
+	} else {
+	    y2milestone ("There are no pre-selected POS patterns");
+	}
+    }
+
     boolean HandleSelectedRadioButton () {
 	string current_button = (string) UI::QueryWidget (`id (`selected_pattern), `CurrentButton);
 
 	if (current_button == "detailed") {
-	    InitTargetNow();
 	    any ret = WFM::call ("inst_packages", [`patterns]);
 
 	    // user didn't accept the pattern selector
@@ -72,8 +206,6 @@
 		return true;
 	    }
 	} else if (regexpmatch (current_button, "^pattern: .*$")) {
-	    InitTargetNow();
-
 	    foreach (string pattern_neutral, all_patterns_in_selection, {
 		list <map <string,any> > current_pattern_state = Pkg::ResolvableProperties (pattern_neutral, `pattern, "");
 		if (size (current_pattern_state) == 0) {
@@ -119,6 +251,8 @@
 
     term term_patterns = `VBox ();
 
+    all_patterns_in_selection = [];
+
     foreach (map <string, string> one_pattern, list_of_patterns, {
 	all_patterns_in_selection = add (all_patterns_in_selection, one_pattern["name"]:"");
 
@@ -159,6 +293,15 @@
     );
 
     Wizard::SetTitleIcon ("yast-software");
+    InitTargetNow();
+
+    if (Mode::update() && Stage::initial()) {
+	ProposeUpgrade();
+    } else {
+	y2milestone ("Not an initial update mode");
+    }
+
+    InitSelectedRadioButton();
 
     any ret = nil;
 

@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Oct 23 14:04:42 CEST 2007 - locilka@suse.cz
+
+- Enhancing upgrade mode to preselect patterns according to list
+  already of installed selections (selections were dropped).
+- 2.13.3
+
+-------------------------------------------------------------------
 Mon Oct 15 12:38:05 CEST 2007 - locilka@suse.cz
 
 - Changing location of migration control file to /etc/SLEPOS.
