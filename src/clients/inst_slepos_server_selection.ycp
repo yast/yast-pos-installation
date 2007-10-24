@@ -2,8 +2,7 @@
  */
 
 {
-    // FIXME
-    textdomain "SLEPOS";
+    textdomain "slepos-installation";
 
     import "Wizard";
     import "Label";
@@ -25,19 +24,19 @@
 	    // TRANSLATORS: A name of pattern, used as RadioButton label
 	    "label"	: _("Admin Server Installation"),
 	    "name"	: "SLEPOS_Server_Admin",
-	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-powertweak.png",
+	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-host.png",
 	],
 	$[
 	    // TRANSLATORS: A name of pattern, used as RadioButton label
 	    "label"	: _("Branch Server Installation"),
 	    "name"	: "SLEPOS_Server_Branch",
-	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-iscsi-server.png",
+	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-network.png",
 	],
 	$[
 	    // TRANSLATORS: A name of pattern, used as RadioButton label
 	    "label"	: _("Image Server Installation"),
 	    "name"	: "SLEPOS_Image_Server",
-	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-instserver.png",
+	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-source.png",
 	],
     ];
 
@@ -287,7 +286,13 @@
 	    term_patterns
 	),
 	// TRANSLATORS: Dialog help
-	_("<p>Some help - <b>FIXME!!!!</b></p>"),
+	_("<p>Please choose what type of server you would like to install and 
+	press <b>Next</b>.</p><br>
+	In case you would like to make a detailed choice or install more services
+	on one server please choose <b>Detailed Selection</b>.<br>
+	<p>The installation will automatically start upon pressing <b>Next</b>.<br>
+ 	When the installation is complete the <b>Migration Assistant</b> window will 
+	open and guide you through the migration process.</p>"),
 	Label::BackButton(),
 	Label::NextButton()
     );

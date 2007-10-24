@@ -11,8 +11,7 @@
     string migration_type = "";
     string slepos_migration_post_script = "";
 
-    // FIXME
-    textdomain "SLEPOS";
+    textdomain "slepos-installation";
 
     import "FileUtils";
     import "Wizard";
@@ -261,7 +260,13 @@
 		`Left (`Label (_("Note: Migration can take very long time according to the current size of your data.")))
 	    ),
 	    // TRANSLATORS: Dialog help
-	    _("<p>Some help - <b>FIXME Text1!!!!</b></p>"),
+	    _("<p>The default choice is <b>Skip Migration</b> in case no files for migration were found.<br>
+	    The files and directories to be migrated are listed in the table.<br>
+	    You can find detailed choices in the <b>Migration Details</b> pop-up menu. Here you can choose 
+            to make a complete Backup of your system (tar.bz2).<br>
+	    By pressing <b>Next</b> you start the migration and possible backup processes (if you have chosen 
+            to backup your system in the <b>Migration Details</b> menu).<br>
+	    The whole procedure may take a long time depending on the size of your data.</p>"),
 	    Label::BackButton(),
 	    Label::NextButton()
 	);
@@ -484,7 +489,13 @@ before the migration starts."))),
 		`VStretch ()
 	    ),
 	    // TRANSLATORS: Dialog help
-	    _("<p>Some help - <b>FIXME Text2!!!!</b></p>"),
+	    _("<p>In case you have chosen to <b>Backup</b> your data you will see the backup 
+	    progress in this window.<br>
+	    After the <b>Backup</b> is finished you will see the progress of the migration 
+	    with the following information :<br>
+	    Total files: Number of processed files.<br>
+	    Total size: Size of migrated data.<br></p>
+	    <p>When the whole migration process is ready you will see a <b>Done</b> message.</p>"),
 	    Label::BackButton(),
 	    Label::NextButton()
 	);
@@ -952,7 +963,7 @@ before the migration starts."))),
 		`Label (_("Running post-migration script..."))
 	    ),
 	    // TRANSLATORS: Dialog help
-	    _("<p>Some help - <b>FIXME Text3!!!!</b></p>"),
+	    _("<p>The last migration step - a cleaning script is triggered.</p>"),
 	    Label::BackButton(),
 	    Label::NextButton()
 	);
