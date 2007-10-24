@@ -1,8 +1,16 @@
 -------------------------------------------------------------------
+Wed Oct 24 15:56:51 CEST 2007 - locilka@suse.cz
+
+- If pattern selection fails, report an error and call manual
+  pattern selector instead. The manual pattern selector has its own
+  interactive issue-solver (#334760).
+- 2.13.4
+
+-------------------------------------------------------------------
 Tue Oct 23 14:04:42 CEST 2007 - locilka@suse.cz
 
 - Enhancing upgrade mode to preselect patterns according to list
-  already of installed selections (selections were dropped).
+  of previously installed selections (selections were dropped).
 - 2.13.3
 
 -------------------------------------------------------------------
