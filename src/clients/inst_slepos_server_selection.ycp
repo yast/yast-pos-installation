@@ -192,18 +192,22 @@
 	}
     }
 
+    boolean Call_inst_packages () {
+	any ret = WFM::call ("inst_packages", [`patterns]);
+
+	// user didn't accept the pattern selector
+	if (ret != `accept) {
+	    return false;
+	} else {
+	    return true;
+	}
+    }
+
     boolean HandleSelectedRadioButton () {
 	string current_button = (string) UI::QueryWidget (`id (`selected_pattern), `CurrentButton);
 
 	if (current_button == "detailed") {
-	    any ret = WFM::call ("inst_packages", [`patterns]);
-
-	    // user didn't accept the pattern selector
-	    if (ret != `accept) {
-		return false;
-	    } else {
-		return true;
-	    }
+	    return Call_inst_packages();
 	} else if (regexpmatch (current_button, "^pattern: .*$")) {
 	    foreach (string pattern_neutral, all_patterns_in_selection, {
 		list <map <string,any> > current_pattern_state = Pkg::ResolvableProperties (pattern_neutral, `pattern, "");
@@ -217,12 +221,19 @@
 	    string pattern_to_select = regexpsub (current_button, "^pattern: (.*)$", "\\1");
 
 	    if (Pkg::ResolvableInstall (pattern_to_select, `pattern) == true) {
-		Pkg::PkgSolve (false);
-		return true;
+		if (Pkg::PkgSolve (false) == true) {
+		    return true;
+		} else {
+		    y2milestone ("Solve() failed");
+		    // TRANSLATORS: Error message
+		    Report::Error (_("An error occured in pattern selection\nStarting manual detailed selection."));
+		    return Call_inst_packages();
+		}
 	    } else {
 		y2error ("Can't select pattern %1", pattern_to_select);
+		UI::ChangeWidget (`id (`selected_pattern), `CurrentButton, "detailed");
 		// TRANSLATORS: Error message, %1 is replaced with the name of the pattern
-		Report::Error (sformat(_("Unable to select pattern '%1'"), GetPatternLabel (pattern_to_select)));
+		Report::Error (sformat(_("Unable to select pattern '%1'.\nDetailed selection needs to be used."), GetPatternLabel (pattern_to_select)));
 		return false;
 	    }
 	} else {
