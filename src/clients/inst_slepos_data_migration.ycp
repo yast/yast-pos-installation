@@ -219,7 +219,7 @@
     void DisplayMigrationDialog () {
 	Wizard::SetContentsButtons (
 	    // TRANSLATORS: Dialog caption
-	    _("Migration Asistent"),
+	    _("Migration Assistent"),
 	    `VBox (
 		`VSpacing (1),
 		`RadioButtonGroup (
@@ -957,7 +957,7 @@ before the migration starts."))),
 
 	Wizard::SetContentsButtons (
 	    // TRANSLATORS: Dialog caption
-	    _("Migration Asistent"),
+	    _("Migration Assistent"),
 	    `VBox (
 		// TRANSLATORS: Dialog informative text (progress)
 		`Label (_("Running post-migration script..."))
