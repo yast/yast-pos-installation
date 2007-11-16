@@ -36,7 +36,7 @@
 	    // TRANSLATORS: A name of pattern, used as RadioButton label
 	    "label"	: _("Image Server Installation"),
 	    "name"	: "SLEPOS_Image_Server",
-	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-source.png",
+	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-sw_source.png",
 	],
     ];
 
@@ -167,7 +167,7 @@
 		y2warning ("More patterns matching: %1", current_pattern_state);
 	    } else if (size (current_pattern_state) == 0) {
 		y2warning ("No pattern matching %1", one_pattern["name"]:"");
-		return;
+		// return;
 	    }
 
 	    foreach (map <string,any> one_pattern, current_pattern_state, {
@@ -309,7 +309,14 @@
     );
 
     Wizard::SetTitleIcon ("yast-software");
-    InitTargetNow();
+
+    // Bugzilla #340708
+    if (! Stage::initial()) {
+	y2milestone ("Initializing target");
+	InitTargetNow();
+    } else {
+	y2milestone ("Skipping target initialization");
+    }
 
     if (Mode::update() && Stage::initial()) {
 	ProposeUpgrade();

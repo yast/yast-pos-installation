@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Nov 16 13:22:38 CET 2007 - locilka@suse.cz
+
+- Skipping target initialization in Server Type Selection dialog
+  in case of first-stage installation (#340708).
+- Using another icon for Image Server (this one exists).
+- 2.13.5
+
+-------------------------------------------------------------------
 Wed Oct 24 15:56:51 CEST 2007 - locilka@suse.cz
 
 - If pattern selection fails, report an error and call manual
