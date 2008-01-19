@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Sat Jan 19 12:49:51 CET 2008 - postadal@suse.cz
+
+- Migration Assistant temporary disabled for SLES10-GM (#354707)
+- 2.13.6
+
+-------------------------------------------------------------------
 Fri Nov 16 13:22:38 CET 2007 - locilka@suse.cz
 
 - Skipping target initialization in Server Type Selection dialog

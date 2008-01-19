@@ -24,7 +24,7 @@ mkdir -p "$RPM_BUILD_ROOT"/etc/SLEPOS
 %files
 %defattr(-,root,root)
 @clientdir@/*.ycp
-@desktopdir@/*.desktop
+#@desktopdir@/*.desktop
 %dir /etc/SLEPOS
 /etc/SLEPOS/*
 %doc @docdir@
