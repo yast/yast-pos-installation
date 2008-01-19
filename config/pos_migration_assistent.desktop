@@ -9,5 +9,5 @@ X-SuSE-YaST-Group=Misc
 Icon=yast-disk
 Exec=/sbin/yast2 inst_slepos_data_migration
 
-Name=POS Migration Assistent
+Name=POS Migration Assistant
 GenericName=Migrate your old POS data to a new location
