@@ -11,3 +11,4 @@ Exec=/sbin/yast2 inst_slepos_data_migration
 
 Name=POS Migration Assistant
 GenericName=Migrate your old POS data to a new location
+StartupNotify=true
