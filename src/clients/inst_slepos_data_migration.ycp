@@ -359,7 +359,7 @@ before the migration starts."))),
 		`Left (`CheckBox (`id (`do_backup), `opt (`notify), _("Create a Backup &Archive"))),
 		`HBox (
 		    // TRANSLATORS: Text entry
-		    `MinWidth (50, `TextEntry (`id (`backup_archive), _("Archive &Location"), backup_archive)),
+		    `MinWidth (50, `InputField (`id (`backup_archive), _("Archive &Location"), backup_archive)),
 		    `HSpacing (1),
 		    `VBox (
 			`VSpacing (1),
@@ -414,7 +414,8 @@ before the migration starts."))),
 		    // TRANSLATORS: File-browse dialog caption
 		    _("Backup Archive File Location")
 		);
-		UI::ChangeWidget (`id (`backup_archive), `Value, existdir);
+		if (existdir != nil)
+		    UI::ChangeWidget (`id (`backup_archive), `Value, existdir);
 
 	    // checkbox "do backup" selected
 	    } else if (ret == `do_backup) {
