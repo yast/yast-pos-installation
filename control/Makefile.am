@@ -4,7 +4,7 @@ SUBDIRS =
 
 controldir = /etc/SLEPOS
 
-control_DATA = slepos_migration.xml
+control_DATA = installation.xml
 
 EXTRA_DIST =  $(control_DATA) $(product_DATA)
 

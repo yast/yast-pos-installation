@@ -1,0 +1,207 @@
+/**
+ * Package:     POS Installation
+ * Summary:     Initialization of current SLEPOS status
+ * Authors:     Jiri Suchomel <jsuchome@suse.cz>
+ *
+ *
+ * This client should be called during 2nd stage of installation or update
+ * of SLES11 together with SLEPOS
+ */
+{
+    textdomain "slepos-installation";
+
+    import "Directory";
+    import "FileUtils";
+    import "Label";
+    import "Mode";
+    import "Popup";
+    import "POSInstallation";
+    import "Stage";
+    import "String";
+    import "Wizard";
+
+    y2milestone ("SLEPOS detection client (%1, %2)", Mode::mode (), Stage::stage ());
+
+    any dialog_ret	= `auto;
+
+    if (Mode::update ())
+    {
+	if (FileUtils::Exists ("/root/inst-sys/imported/SuSE-release"))
+	{
+	    POSInstallation::suse_release_path	= "/root/inst-sys/imported/SuSE-release";
+	    y2milestone ("old SuSE-release found");
+	}
+    }
+
+    // just for testing...
+    if (Mode::normal()) Wizard::CreateDialog();
+
+
+    // there are 2 possible situations:
+    // 1. normal SLES11 installation
+    // 2. update from SLE10
+
+    // FIXME nezapomenout inicializovat target&source (az v dalsich krocich)
+
+    // FIXME dat si pozor, at nedelem nektere veci opakovane... (Next & Back):  if (!GetInstArgs::going_back ())
+
+    // regular installation of SLES11
+    if (!Mode::update ())
+    {
+	// path to file or directory with data for detection script
+	string file_path	= POSInstallation::file_path;
+	string dir_path		= POSInstallation::dir_path;
+
+	// FIXME maybe move this part to standalone client...
+
+	// ask for nlpos9 data... :
+	/*
+	zde to probiha podobneji jako u migrace sleposu10, jen je tu navic moznost
+	predat konfiguraci offline BS, ktera slouzi pro konfiguraci BS na slepos11
+	pro offline ldap, detekci tohoto zpusobu si jiz obstara sam migracni
+	skript, je treba jen dopsat do yast komentare text navic pro tuto moznost.
+
+	*/
+	term cont	= `RadioButtonGroup (`id ("migration_data"), `opt (`notify), `VBox (
+	    `Left (`RadioButton (`id ("rb_file"), `opt (`notify), _("Path to archive file"))),
+	    `HBox (
+		`HSpacing (3),
+		`HBox (
+		    `InputField (`id ("file_path"),`opt (`hstretch), "", file_path),
+		    `PushButton (`id ("browse_file"), Label::BrowseButton ())
+		)
+	    ),
+	    `VSpacing (),
+	    `Left (`RadioButton (`id ("rb_dir"), `opt (`notify), _("Path to backup directory"))),
+	    `HBox (
+		`HSpacing (3),
+		`HBox (
+		    `InputField (`id ("dir_path"),`opt (`hstretch), "", dir_path),
+		    `PushButton (`id ("browse_dir"), Label::BrowseButton ())
+		)
+	    )
+	));
+	cont	= `HBox (`HSpacing (3), cont, `HSpacing (3));
+
+	// help text
+	string help	= _("<p>Enter EITHER nlpos9 migration data, OR SLES11 offline data (whatever it is)....
+	Or nothing, if you don't understand the request.</p>");
+
+	// Dialog caption
+	Wizard::SetContentsButtons (_("Entering Migration Data"), cont, help,
+	    Label::BackButton(), Label::NextButton());
+	Wizard::SetTitleIcon ("yast-software");
+
+	UI::ChangeWidget (`id ("file_path"), `Enabled, file_path != "");
+	UI::ChangeWidget (`id ("browse_file"), `Enabled, file_path != "");
+	UI::ChangeWidget (`id ("dir_path"), `Enabled, dir_path != "");
+	UI::ChangeWidget (`id ("browse_dir"), `Enabled, dir_path != "");
+
+	any ret	= `next;
+        while (true) {
+	    ret = UI::UserInput();
+
+	    if (ret == "rb_file" || ret == "rb_dir")
+	    {
+		UI::ChangeWidget (`id ("file_path"), `Enabled, ret == "rb_file");
+		UI::ChangeWidget (`id ("browse_file"), `Enabled, ret == "rb_file");
+		UI::ChangeWidget (`id ("dir_path"), `Enabled, ret == "rb_dir");
+		UI::ChangeWidget (`id ("browse_dir"), `Enabled, ret == "rb_dir");
+	    }
+	    if (ret == "browse_file")
+	    {
+		// file location popup label
+		string selected = UI::AskForExistingFile (file_path, "", _("Path to File"));
+	        if (selected != nil)
+		{
+		    file_path	= selected;
+		    UI::ChangeWidget (`id ("file_path"), `Value, file_path);
+		}
+	    }
+	    if (ret == "browse_dir")
+	    {
+		// directory location popup label
+		string selected = UI::AskForExistingDirectory (dir_path, _("Path to Directory"));
+	        if (selected != nil)
+		{
+		    dir_path	= selected;
+		    UI::ChangeWidget (`id ("dir_path"), `Value, dir_path);
+		}
+	    }
+	    if (ret == `next)
+	    {
+		// FIXME validate
+		// reset the possible value of the string which won't be used
+		if (UI::QueryWidget (`id ("migration_data"), `Value) == "rb_file")
+		    dir_path	= "";
+		else
+		    file_path	= "";
+
+		POSInstallation::dir_path	= dir_path;
+		POSInstallation::file_path	= file_path;
+		dialog_ret	= `next;
+		break;
+	    }
+	    else if (ret == `back) {
+		dialog_ret	= `back;
+		break;
+	    }
+	    else if (ret == `abort || ret == `cancel) {
+		if (Popup::ConfirmAbort (`incomplete))
+		{
+		    dialog_ret	= `abort;
+		    break;
+		}
+		else continue;
+	    }
+	}
+    }
+    // the rest of workflow is common to SLES11 installation and update from SLES10
+
+    /*
+    Now, SLEPOS slepos11_get_deploy_type.sh script should detect the type of installation:
+	AS (Admin Server),
+	BS (Branch Server)
+	IS (Image Server)
+
+    'slepos11_get_deploy_type.sh [<-f file.tar.gz>|<-d backup_directory>] [-o SuSE-release]'
+    return: sum of (AS:1, BS:2, IS:4)
+    */
+
+    string get_type_cmd	= POSInstallation::get_type_cmd;
+
+    if (POSInstallation::file_path!= "")
+	get_type_cmd = get_type_cmd + " -f " + POSInstallation::file_path;
+    else if (POSInstallation::dir_path != "")
+	get_type_cmd = get_type_cmd + " -d " + POSInstallation::dir_path;
+
+    if (POSInstallation::suse_release_path != "")
+	get_type_cmd = get_type_cmd + " -o " + POSInstallation::suse_release_path;
+
+    get_type_cmd	= String::Quote (get_type_cmd);
+
+    // detection should be fast, no need for progress and/or background
+    map out	= (map) SCR::Execute (.target.bash_output, get_type_cmd);
+    integer ret	= 0;
+    if (out["stderr"]:"" == "" && out["exit"]:0 > 0 && out["exit"]:0 < 8)
+	ret	= out["exit"]:0;
+
+    y2milestone ("output of '%1': %2", get_type_cmd, out);
+
+    // reset the map with detected servers...
+    map detected     = $[];
+
+    if ((ret | 1) == ret)
+	detected["SLEPOS_Server_Admin"]	= true;
+    if ((ret | 2) == ret)
+	detected["SLEPOS_Server_Branch"]= true;
+    if ((ret | 4) == ret)
+	detected["SLEPOS_Image_Server"]	= true;
+
+    // ... and save new one
+    POSInstallation::detected	= detected;
+
+    if (Mode::normal()) Wizard::CloseDialog();
+
+    return dialog_ret;
+}

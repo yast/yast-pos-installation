@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Tue May 12 07:58:36 CEST 2009 - jsuchome@suse.cz
+
+- rewritten for new installation and migration setup (fate#303644)
+- new clients for 1st stage (inst_slepos_initialization) and for
+  2nd stage (inst_slepos_detection, inst_slepos_migration)
+- added POSInstallation module to store data during workflow
+- 2.17.1
+
+-------------------------------------------------------------------
 Thu Feb 26 10:21:23 CET 2009 - locilka@suse.cz
 
 - Adapted to SLE 11 Codebase.

@@ -1,0 +1,54 @@
+/**
+ * Package:	POS Installation
+ * Summary:	Data used during POS installation or upgrade
+ * Authors:	Jiri Suchomel <jsuchome@suse.cz>
+ */
+
+{
+
+module "POSInstallation";
+textdomain "slepos-installation";
+
+/**
+ * name of SLEPOS script for detecting deployment type
+ */
+global string get_type_cmd	= "slepos11_get_deploy_type.sh";
+
+/**
+ * name of SLEPOS script for data migration
+ */
+global string migrate_cmd	= "slepos_migrate.sh";
+
+
+
+/**
+ * path to file or directory with data for detection script
+ */
+global string file_path	= "";
+global string dir_path	= "";
+
+/**
+ * Path to SuSE-release file of the old system (before update)
+ */
+global string suse_release_path	= "";
+
+/**
+ * what kind of SLEPOS installation was detected on the system
+ */
+global map detected	= $[
+    "SLEPOS_Server_Admin"	: true,
+    "SLEPOS_Server_Branch"	: false,
+    "SLEPOS_Image_Server"	: true
+];
+
+/**
+ * what kind of SLEPOS parts should be migrated
+ * (may be smaller set than the detected one)
+ */
+global map for_migration	= $[
+    "SLEPOS_Server_Admin"	: true,
+    "SLEPOS_Server_Branch"	: false,
+    "SLEPOS_Image_Server"	: true
+];
+
+}

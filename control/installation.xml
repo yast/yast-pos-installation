@@ -1,0 +1,138 @@
+<?xml version="1.0"?>
+<!DOCTYPE productDefines SYSTEM "/usr/share/YaST2/control/control.dtd">
+<productDefines xmlns="http://www.suse.com/1.0/yast2ns" xmlns:config="http://www.suse.com/1.0/configns">
+    <textdomain>control-SLEPOS</textdomain>
+
+
+    <workflows config:type="list">
+
+	<!-- Workflow for the Add-On installation
+	     on a running system -->
+        <workflow>
+            <defaults>
+                <enable_back>no</enable_back>
+                <enable_next>no</enable_next>
+            </defaults>
+
+            <stage>normal</stage>
+            <mode>installation,normal</mode>
+
+            <modules config:type="list">
+                <module>
+                    <label>Server Type Selection</label>
+                    <name>inst_slepos_server_selection</name>
+                    <enable_back>no</enable_back>
+                    <enable_next>yes</enable_next>
+                </module>
+                <module>
+                    <label>Install Software</label>
+                    <name>inst_rpmcopy</name>
+                    <enable_back>yes</enable_back>
+                    <enable_next>yes</enable_next>
+                </module>
+            </modules>
+	</workflow>
+    </workflows>
+
+    <update>
+
+	<workflows config:type="list">
+	    <!-- Workflow for the Update process: First Stage -->
+	    <workflow>
+        	<defaults>
+            	    <enable_back>yes</enable_back>
+            	    <enable_next>yes</enable_next>
+        	</defaults>
+
+		<!-- First Stage - Installation -->
+        	<stage>initial</stage>
+        	<mode>update</mode>
+
+		<!-- Installation: Insert -->
+		<!-- Hidden step !!! -->
+		<insert_modules config:type="list">
+		    <insert_module>
+			<before>initial_update_proposal</before>
+			<modules config:type="list">
+			    <module>
+				<name>inst_slepos_initialization</name>
+			    </module>
+			</modules>
+		    </insert_module>
+		</insert_modules>
+    	    </workflow>
+
+	    <!-- Workflow for the Update process: Second Stage -->
+	    <workflow>
+        	<defaults>
+            	    <enable_back>yes</enable_back>
+            	    <enable_next>yes</enable_next>
+        	</defaults>
+
+		<!-- Second Stage - Update -->
+        	<stage>continue</stage>
+        	<mode>update</mode>
+
+		<!-- Update: Insert new steps -->
+		<insert_modules config:type="list">
+		    <insert_module>
+			<before>release_notes</before>
+			<modules config:type="list">
+			    <module>
+				<label>POS Setup</label>
+				<name>inst_slepos_detection</name>
+			    </module>
+			    <module>
+				<name>inst_slepos_server_selection</name>
+			    </module>
+			    <module>
+				<name>inst_slepos_migration</name>
+			    </module>
+			</modules>
+		    </insert_module>
+		</insert_modules>
+    	    </workflow>
+
+	    <!-- Workflow for the New installation - First Stage 
+		 (nothing to be done here...)
+
+	    <workflow>
+        	<stage>initial</stage>
+        	<mode>installation</mode>
+    	    </workflow>
+	    -->
+
+	    <!-- Workflow for the New installation: Second Stage -->
+	    <workflow>
+        	<defaults>
+            	    <enable_back>yes</enable_back>
+            	    <enable_next>yes</enable_next>
+        	</defaults>
+
+		<!-- Second Stage - Update -->
+        	<stage>continue</stage>
+        	<mode>update</mode>
+
+		<!-- Update: Replace Services step -->
+		<replace_modules config:type="list">
+		    <replace_module>
+			<replace>continue_service_proposal</replace>
+		        <new_modules config:type="list">
+			    <new_module>
+				<label>POS Setup</label>
+				<name>inst_slepos_detection</name>
+			    </new_module>
+			    <new_module>
+				<name>inst_slepos_server_selection</name>
+			    </new_module>
+			    <new_module>
+				<name>inst_slepos_migration</name>
+			    </new_module>
+			</new_modules>
+		    </replace_module>
+		</replace_modules>
+    	    </workflow>
+
+	</workflows>
+    </update>
+</productDefines>
