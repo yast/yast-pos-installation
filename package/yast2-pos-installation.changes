@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed May 13 11:52:44 CEST 2009 - jsuchome@suse.cz
+
+- correct syntax of replace_modules in installation.xml
+- create control-SLEPOS.pot file from installation.xml strings
+- 2.17.2
+
+-------------------------------------------------------------------
 Tue May 12 07:58:36 CEST 2009 - jsuchome@suse.cz
 
 - rewritten for new installation and migration setup (fate#303644)
