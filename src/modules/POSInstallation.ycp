@@ -12,12 +12,12 @@ textdomain "slepos-installation";
 /**
  * name of SLEPOS script for detecting deployment type
  */
-global string get_type_cmd	= "slepos11_get_deploy_type.sh";
+global string get_type_cmd	= "/usr/lib/SLEPOS/migration/slepos11_get_deploy_type.sh";
 
 /**
  * name of SLEPOS script for data migration
  */
-global string migrate_cmd	= "slepos_migrate.sh";
+global string migrate_cmd	= "/usr/lib/SLEPOS/migration/slepos_migrate.sh";
 
 
 

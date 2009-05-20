@@ -18,18 +18,30 @@
             <mode>installation,normal</mode>
 
             <modules config:type="list">
-                <module>
-                    <label>Server Type Selection</label>
-                    <name>inst_slepos_server_selection</name>
+		<module>
+		    <label>POS Setup</label>
+		    <name>inst_slepos_detection</name>
                     <enable_back>no</enable_back>
                     <enable_next>yes</enable_next>
+		</module>
+                <module>
+                    <name>inst_slepos_server_selection</name>
+                    <enable_back>yes</enable_back>
+                    <enable_next>yes</enable_next>
                 </module>
+		<module>
+		    <name>inst_slepos_migration</name>
+                    <enable_back>yes</enable_back>
+                    <enable_next>yes</enable_next>
+		</module>
+		<!--
                 <module>
                     <label>Install Software</label>
                     <name>inst_rpmcopy</name>
                     <enable_back>yes</enable_back>
                     <enable_next>yes</enable_next>
                 </module>
+		-->
             </modules>
 	</workflow>
     </workflows>

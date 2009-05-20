@@ -33,15 +33,12 @@
 	}
     }
 
-    // just for testing...
     if (Mode::normal()) Wizard::CreateDialog();
 
 
     // there are 2 possible situations:
     // 1. normal SLES11 installation
     // 2. update from SLE10
-
-    // FIXME nezapomenout inicializovat target&source (az v dalsich krocich)
 
     // FIXME dat si pozor, at nedelem nektere veci opakovane... (Next & Back):  if (!GetInstArgs::going_back ())
 
