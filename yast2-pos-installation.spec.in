@@ -6,7 +6,7 @@ BuildRequires:	perl-XML-Writer update-desktop-files yast2 yast2-devtools yast2-t
 
 BuildArchitectures:	noarch
 
-Summary:	POS Installation and Upgrade
+Summary:	YaST2 - POS Installation and Upgrade
 
 %description
 YaST POS Installation - controls the pos installation and upgrade
