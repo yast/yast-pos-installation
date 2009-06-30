@@ -167,6 +167,10 @@
 
     string get_type_cmd	= POSInstallation::get_type_cmd;
 
+    // on installed system, find the script in y2update (bnc#517314)
+    if (Mode::mode () == "installation" && Stage::stage () == "normal")
+	get_type_cmd	= "/y2update/all/" + get_type_cmd;
+
     if (POSInstallation::file_path!= "")
 	get_type_cmd = get_type_cmd + " -f " + POSInstallation::file_path;
     else if (POSInstallation::dir_path != "")

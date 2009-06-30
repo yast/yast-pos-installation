@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Jun 30 11:49:04 CEST 2009 - jsuchome@suse.cz
+
+- detection script called directly from y2update directory
+  (bnc#517314)
+- 2.17.4
+
+-------------------------------------------------------------------
 Wed May 20 13:47:47 CEST 2009 - jsuchome@suse.cz
 
 - full path to slepos scripts
