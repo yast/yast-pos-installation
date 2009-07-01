@@ -114,7 +114,8 @@
 	_("POS Data Migration"),
 	cont,
 	// TRANSLATORS: Dialog help
-	_("<p>FIXME</p>"),
+	_("<p>The progress bar indicates the separate migration steps. The complete log
+of the migration is saved and will be shown in case of migration failure.</p>"),
 	Label::BackButton(),
 	Label::NextButton()
     );

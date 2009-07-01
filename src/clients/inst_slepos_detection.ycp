@@ -81,8 +81,15 @@
 	cont	= `HBox (`HSpacing (3), cont, `HSpacing (3));
 
 	// help text
-	string help	= _("<p>Enter EITHER nlpos9 migration data, OR SLES11 offline data (whatever it is)....
-	Or nothing, if you don't understand the request.</p>");
+	string help	= _("<p>In case you are not migrating from NLPOS9 and this is a new SLEPOS 11          
+installation continue by clicking <b>Next</b>.</p>") +
+
+	// help text, cont.
+	_("<p>To migrate from NLPOS9 insert the backed up archive file or backup directory   
+into the corresponding input box and continue by clicking <b>Next</b>.
+The backup file or directory is prepared beforehand using the script <tt>nlpos9_backup_data.sh</tt>
+which can be found on the SLEPOS CD in the directory <tt>/migration/</tt> or in the directory
+<tt>/usr/lib/SLEPOS/migration</tt> of <tt>POS_Migration.rpm</tt> package.</p>");
 
 	// Dialog caption
 	Wizard::SetContentsButtons (_("Entering Migration Data"), cont, help,

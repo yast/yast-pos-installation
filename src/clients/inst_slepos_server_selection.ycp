@@ -30,7 +30,6 @@
     list <map <string, string> > list_of_patterns = [
 	$[
 	    // TRANSLATORS: A name of pattern, used as CheckBox label
-//	    "label"	: _("Admin Server Installation"),
 	    "label"	: _("Admin Server"),
 	    "name"	: "SLEPOS_Server_Admin",
 	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-host.png",
@@ -230,27 +229,13 @@
 	_("Server Pattern Selection"),
 	cont,
 
-/* FIXME help text podle:
- tedy ten dialog je spis pro upresneni toho co uzivatel nechce migrovat a u toho co chce navic se spis pocita ze se doinstaluji jen prislusne patterny
+	// help text
+	_("<p>Choose the pattern which you want to install. You may disable the migration
+of the relevant deployment (AS, BS or IS).</p>") +
 
-(13:31:59)  Petr Ostadal:  takze dialog pokryva obe varianty , jen me ted napadlo, ze by bylo zajimave pridat do zavorky oonformaci, zda jde o migraci ci "cistou" instalaci AS, BS ci IS... 
-(13:32:46)  jsuchome:  no, co uzivatel zaskrtne, to je jen instalace, to co bylo prednastavene je migrace 
-(13:33:15)  jsuchome:  otazka je, kdy by se to dalo vyznacit, jak klikne na next tak ten dialog zmizi 
-(13:33:25)  Petr Ostadal:  vypadalo by to treba takto:   o Admin Server (migration) - checked   
-o Branch Server (instalation) - not checked   
-o Image server (migration) - checked 
-(13:33:28)  jsuchome:  myslim, ze je to potreba vysvetlit v help textu 
-(13:33:52)  jsuchome:  aha, jako ze by to by ty labely byly predem pripravene 
-(13:34:01)  Petr Ostadal:  ano 
-(13:34:10)  jsuchome:  no, ale to je dost zmatek 
-(13:34:35)  Petr Ostadal:  mozna ta instalace by tam napsana byt ani nemusela
-*/
+	// help text, cont.
+	_("<p>The installation will start upon pressing <b>Next</b>.</p>"),
 
-	// TRANSLATORS: Dialog help
-	_("<p>Please choose what type of server you would like to install and 
-	press <b>Next</b>.</p><br>
-	<p>The installation will start upon pressing <b>Next</b>.<br>
-	</p>"),
 	Label::BackButton(),
 	Label::NextButton()
     );
