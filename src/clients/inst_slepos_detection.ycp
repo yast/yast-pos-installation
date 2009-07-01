@@ -60,7 +60,9 @@
 
 	*/
 	term cont	= `RadioButtonGroup (`id ("migration_data"), `opt (`notify), `VBox (
-	    `Left (`RadioButton (`id ("rb_file"), `opt (`notify), _("Path to archive file"))),
+	    `Left (
+		// radio button label
+		`RadioButton (`id ("rb_file"), `opt (`notify), _("Path to archive file"), file_path != "")),
 	    `HBox (
 		`HSpacing (3),
 		`HBox (
@@ -69,7 +71,7 @@
 		)
 	    ),
 	    `VSpacing (),
-	    `Left (`RadioButton (`id ("rb_dir"), `opt (`notify), _("Path to backup directory"))),
+	    `Left (`RadioButton (`id ("rb_dir"), `opt (`notify), _("Path to backup directory"), dir_path != "")),
 	    `HBox (
 		`HSpacing (3),
 		`HBox (
@@ -137,9 +139,15 @@ which can be found on the SLEPOS CD in the directory <tt>/migration/</tt> or in 
 		// FIXME validate
 		// reset the possible value of the string which won't be used
 		if (UI::QueryWidget (`id ("migration_data"), `Value) == "rb_file")
+		{
+		    file_path	= (string) UI::QueryWidget (`id ("file_path"), `Value);
 		    dir_path	= "";
+		}
 		else
+		{
+		    dir_path	= (string) UI::QueryWidget (`id ("dir_path"), `Value);
 		    file_path	= "";
+		}
 
 		POSInstallation::dir_path	= dir_path;
 		POSInstallation::file_path	= file_path;
