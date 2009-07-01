@@ -70,7 +70,7 @@
 	    y2internal ("new line: '%1'", line);
 
 	    // read total number of tasks
-	    if (substring (line, 0, 6) == "tasks:")
+	    if (substring (line, 0, 7) == "titles:")
 	    {
 		list<string> l	= splitstring (line, " ");
 		tasks		= tointeger (l[1]:"0");
@@ -82,7 +82,7 @@
 		);
 	    }
 	    // update current task label
-	    else if (substring (line, 0, 5) == "task:")
+	    else if (substring (line, 0, 6) == "title:")
 	    {
 		list<string> l	= splitstring (line, " ");
 		l		= remove (l, 0);
@@ -98,7 +98,7 @@
 	    else if (substring (line, 0, 9) == "position:")
 	    {
 		list<string> l	= splitstring (line, " ");
-		integer pos	= tointeger (l[1]:"0");
+		integer pos	= tointeger (deletechars (l[1]:"0", "% "));
 		if (pos == nil)
 		    pos	= 0;
 		UI::ChangeWidget (`id (`current_progress), `Value, pos);

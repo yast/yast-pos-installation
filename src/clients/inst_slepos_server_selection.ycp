@@ -140,16 +140,13 @@
 		labels));
 	    return manual_package_selection ();
 	}
-	if (to_install != [])
-	{
-	    if (Pkg::PkgSolve (false) == true) {
+	if (Pkg::PkgSolve (false) == true) {
 		Pkg::PkgCommit (0);
-	    }
-	    else {
-		// TRANSLATORS: Error message
-		Report::Error (_("An error occured in pattern selection\nStarting manual selection."));
-		return manual_package_selection ();
-	    }
+	}
+	else {
+	    // TRANSLATORS: Error message
+	    Report::Error (_("An error occured in pattern selection\nStarting manual selection."));
+	    return manual_package_selection ();
 	}
 
 	// update the migrate info for the next dialog
