@@ -30,19 +30,19 @@
     list <map <string, string> > list_of_patterns = [
 	$[
 	    // TRANSLATORS: A name of pattern, used as CheckBox label
-	    "label"	: _("Admin Server"),
+	    "label"	: _("Admin Server (AS)"),
 	    "name"	: "SLEPOS_Server_Admin",
 	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-host.png",
 	],
 	$[
 	    // TRANSLATORS: A name of pattern, used as CheckBox label
-	    "label"	: _("Branch Server"),
+	    "label"	: _("Branch Server (BS)"),
 	    "name"	: "SLEPOS_Server_Branch",
 	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-network.png",
 	],
 	$[
 	    // TRANSLATORS: A name of pattern, used as CheckBox label
-	    "label"	: _("Image Server"),
+	    "label"	: _("Image Server (IS)"),
 	    "name"	: "SLEPOS_Image_Server",
 	    "icon"	: "/usr/share/icons/hicolor/32x32/apps/yast-sw_source.png",
 	],
@@ -228,7 +228,7 @@
 
 	// help text
 	_("<p>Choose the pattern which you want to install. You may disable the migration
-of the relevant deployment (AS, BS or IS).</p>") +
+of the relevant deployment (Admin Server, Branch Server or Image Server).</p>") +
 
 	// help text, cont.
 	_("<p>The installation will start upon pressing <b>Next</b>.</p>"),
