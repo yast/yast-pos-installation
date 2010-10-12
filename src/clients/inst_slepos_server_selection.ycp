@@ -15,6 +15,7 @@
     import "Directory";
     import "String";
     import "FileUtils";
+    import "PackagesUI";
 
     if (Mode::normal())
 	Wizard::CreateDialog();
@@ -193,14 +194,9 @@
     }
 
     boolean Call_inst_packages () {
-	any ret = WFM::call ("inst_packages", [`patterns]);
-
-	// user didn't accept the pattern selector
-	if (ret != `accept) {
-	    return false;
-	} else {
-	    return true;
-	}
+	symbol ret = PackagesUI::RunPatternSelector();
+	// user accepted the pattern selector
+	return ret == `accept;
     }
 
     boolean HandleSelectedRadioButton () {
