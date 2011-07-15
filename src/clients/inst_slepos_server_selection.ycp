@@ -145,7 +145,7 @@
 	}
 	else {
 	    // TRANSLATORS: Error message
-	    Report::Error (_("An error occured in pattern selection\nStarting manual selection."));
+	    Report::Error (_("An error occurred in pattern selection\nStarting manual selection."));
 	    return manual_package_selection ();
 	}
 
