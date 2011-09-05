@@ -1,0 +1,17 @@
+## YCP module configure.in.in
+
+## Initialize
+@YAST2-INIT-COMMON@
+@YAST2-INIT-YCP@
+
+## some common checks
+@YAST2-CHECKS-COMMON@
+@YAST2-CHECKS-YCP@
+
+## Nasty hack: xgettext doesn't work for XML files, so let's symlink it
+( cd control; ln -sf installation.xml installation.glade )
+
+find control -name \*.glade | LC_ALL=C sort > POTFILES
+
+## and generate the output...
+@YAST2-OUTPUT@

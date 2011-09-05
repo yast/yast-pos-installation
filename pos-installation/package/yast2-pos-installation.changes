@@ -1,0 +1,123 @@
+-------------------------------------------------------------------
+Thu Mar 25 10:02:11 CET 2010 - jsuchome@suse.cz
+
+- updated texts to make them more understandable (bnc#588712)
+- 2.17.8 
+
+-------------------------------------------------------------------
+Wed Jul  1 12:08:23 CEST 2009 - jsuchome@suse.cz
+
+- always run Solve and Commit, so product metadata get installed 
+  (bnc#517288)
+- adapt the migration progess to real script output (bnc#518185)
+- 2.17.7
+
+-------------------------------------------------------------------
+Wed Jul  1 09:45:01 CEST 2009 - jsuchome@suse.cz
+
+- save the content of input boxes (bnc#518061)
+- 2.17.6
+
+-------------------------------------------------------------------
+Wed Jul  1 08:38:37 CEST 2009 - jsuchome@suse.cz
+
+- updated the help text (bnc#517717)
+- 2.17.5 
+
+-------------------------------------------------------------------
+Tue Jun 30 11:49:04 CEST 2009 - jsuchome@suse.cz
+
+- detection script called directly from y2update directory
+  (bnc#517314)
+- 2.17.4
+
+-------------------------------------------------------------------
+Wed May 20 13:47:47 CEST 2009 - jsuchome@suse.cz
+
+- full path to slepos scripts
+- fixes in installation.xml (Add-On workflow on installed system)
+- 2.17.3
+
+-------------------------------------------------------------------
+Wed May 13 11:52:44 CEST 2009 - jsuchome@suse.cz
+
+- correct syntax of replace_modules in installation.xml
+- create control-SLEPOS.pot file from installation.xml strings
+- 2.17.2
+
+-------------------------------------------------------------------
+Tue May 12 07:58:36 CEST 2009 - jsuchome@suse.cz
+
+- rewritten for new installation and migration setup (fate#303644)
+- new clients for 1st stage (inst_slepos_initialization) and for
+  2nd stage (inst_slepos_detection, inst_slepos_migration)
+- added POSInstallation module to store data during workflow
+- 2.17.1
+
+-------------------------------------------------------------------
+Thu Feb 26 10:21:23 CET 2009 - locilka@suse.cz
+
+- Adapted to SLE 11 Codebase.
+- 2.17.0
+
+-------------------------------------------------------------------
+Fri May 16 16:40:22 CEST 2008 - jsrain@suse.cz
+
+- added categories Settings and System into desktop file
+  (bnc #382778)
+
+-------------------------------------------------------------------
+Mon Mar 17 12:43:32 CET 2008 - jsrain@suse.cz
+
+- added 'StartupNotify=true' to the desktop file (bnc #304964)
+
+-------------------------------------------------------------------
+Sat Jan 19 12:49:51 CET 2008 - postadal@suse.cz
+
+- Migration Assistant temporary disabled for SLES10-GM (#354707)
+- 2.13.6
+
+-------------------------------------------------------------------
+Fri Nov 16 13:22:38 CET 2007 - locilka@suse.cz
+
+- Skipping target initialization in Server Type Selection dialog
+  in case of first-stage installation (#340708).
+- Using another icon for Image Server (this one exists).
+- 2.13.5
+
+-------------------------------------------------------------------
+Wed Oct 24 15:56:51 CEST 2007 - locilka@suse.cz
+
+- If pattern selection fails, report an error and call manual
+  pattern selector instead. The manual pattern selector has its own
+  interactive issue-solver (#334760).
+- 2.13.4
+
+-------------------------------------------------------------------
+Tue Oct 23 14:04:42 CEST 2007 - locilka@suse.cz
+
+- Enhancing upgrade mode to preselect patterns according to list
+  of previously installed selections (selections were dropped).
+- 2.13.3
+
+-------------------------------------------------------------------
+Mon Oct 15 12:38:05 CEST 2007 - locilka@suse.cz
+
+- Changing location of migration control file to /etc/SLEPOS.
+- Adding real-data migration configuration.
+- Proposing to skip migration if nothing to migrate is available.
+- 2.13.2
+
+-------------------------------------------------------------------
+Mon Oct 15 08:42:43 CEST 2007 - locilka@suse.cz
+
+- Renamed scripts *.ycp to inst_*.ycp (#333495)
+- 2.13.1
+
+-------------------------------------------------------------------
+Wed Oct 10 13:52:53 2007 - locilka@suse.cz
+
+- initial version
+    * POS Data Migration client
+    * POS Pattern Selector
+- 2.13.0

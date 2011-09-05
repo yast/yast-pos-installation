@@ -1,0 +1,252 @@
+/**
+ * Package:     POS Installation
+ * Summary:     Migration of old SLEPOS data
+ * Authors:	Jiri Suchomel <jsuchome@suse.cz>
+ *
+ * This client should be called during 2nd stage of installation or update
+ * of SLES11 together with SLEPOS
+ */
+
+{
+    textdomain "slepos-installation";
+
+    import "Directory";
+    import "GetInstArgs";
+    import "Label";
+    import "Mode";
+    import "Popup";
+    import "POSInstallation";
+    import "Stage";
+    import "String";
+    import "Wizard";
+
+    y2milestone ("SLEPOS migration client (%1, %2)", Mode::mode (), Stage::stage ());
+
+    symbol dialog_ret = `auto;
+
+    if (size (POSInstallation::for_migration) < 1)
+    {
+	y2milestone ("nothing to migrate: skipping...");
+	return `auto;
+    }
+    if (GetInstArgs::going_back ())
+    {
+	y2milestone ("nothing to do when going back...");
+	return `back;
+    }
+
+
+    if (Mode::normal())
+	Wizard::CreateDialog();
+
+    term cont	= `HBox (`HSpacing (3), `VBox (
+	`VSpacing (),
+	`ReplacePoint (`id (`rp_current),
+	    // progress bar label
+	    `ProgressBar (`id (`current_progress), _("Migration Step Progress"))
+	),
+        `VSpacing (0.2),
+	`ReplacePoint (`id(`rp_total),
+	    // progress bar label
+	    `ProgressBar (`id (`total_progress ), _("Migration Progress"))
+	),
+	`VSpacing (),
+	`ReplacePoint (`id (`rp_label),
+	    `Label ("")
+	)
+    ), `HSpacing (3));
+
+    integer process_id		= -1;
+    string log_file	= (string)SCR::Read(.target.tmpdir) + "/slepos_migration.log";
+    integer tasks_passed	= -1;
+    integer tasks		= 0;
+
+    // read the migrate script output and show progress
+    void update_progress () {
+
+	string line = (string)SCR::Read (.process.read_line, process_id);
+	if (line != nil && line != "")
+	{
+	    y2internal ("new line: '%1'", line);
+
+	    // read total number of tasks
+	    if (substring (line, 0, 7) == "titles:")
+	    {
+		list<string> l	= splitstring (line, " ");
+		tasks		= tointeger (l[1]:"0");
+		if (tasks == nil)
+		    tasks	= 0;
+		UI::ReplaceWidget (`id(`rp_total),
+		    // progress bar label
+		    `ProgressBar (`id (`total_progress ), _("Migration Progress"), tasks)
+		);
+	    }
+	    // update current task label
+	    else if (substring (line, 0, 6) == "title:")
+	    {
+		list<string> l	= splitstring (line, " ");
+		l		= remove (l, 0);
+		string current	= mergestring (l, " ");
+		UI::ReplaceWidget (`id(`rp_current),
+		    // progress bar label
+		    `ProgressBar (`id (`current_progress), current, 100)
+		);
+		tasks_passed	= tasks_passed + 1;
+		UI::ChangeWidget (`id (`total_progress), `Value, tasks_passed);
+		UI::ChangeWidget (`id (`current_progress), `Value, 0);
+	    }
+	    else if (substring (line, 0, 9) == "position:")
+	    {
+		list<string> l	= splitstring (line, " ");
+		integer pos	= tointeger (deletechars (l[1]:"0", "% "));
+		if (pos == nil)
+		    pos	= 0;
+		UI::ChangeWidget (`id (`current_progress), `Value, pos);
+	    }
+	}
+	string err = (string)SCR::Read (.process.read_line_stderr, process_id);
+	if (err!= nil && err != "")
+	    y2warning ("error output: '%1'", err);
+    }
+
+    Wizard::SetContentsButtons (
+	// TRANSLATORS: Dialog caption
+	_("POS Data Migration"),
+	cont,
+	// TRANSLATORS: Dialog help
+	_("<p>The progress bar indicates the separate migration steps. The complete log
+of the migration is saved and will be shown in case of migration failure.</p>"),
+	Label::BackButton(),
+	Label::NextButton()
+    );
+
+
+    Wizard::SetTitleIcon ("yast-software");
+    Wizard::DisableNextButton ();
+    Wizard::DisableBackButton ();
+    // FIXME Abort button is disabled at this time?
+
+    string migrate_cmd	= POSInstallation::migrate_cmd;
+
+    if (POSInstallation::file_path!= "")
+	migrate_cmd = migrate_cmd + " -f " + POSInstallation::file_path;
+    else if (POSInstallation::dir_path != "")
+	migrate_cmd = migrate_cmd + " -d " + POSInstallation::dir_path;
+
+    if (POSInstallation::suse_release_path != "")
+	migrate_cmd = migrate_cmd + " -o " + POSInstallation::suse_release_path;
+
+    integer deploy_type	= 0;
+    if (POSInstallation::for_migration["SLEPOS_Server_Admin"]:false)
+	deploy_type	= 1;
+    if (POSInstallation::for_migration["SLEPOS_Server_Branch"]:false)
+	deploy_type	= deploy_type + 2;
+    if (POSInstallation::for_migration["SLEPOS_Image_Server"]:false)
+	deploy_type	= deploy_type + 4;
+
+    migrate_cmd = sformat ("%1 -t %2", migrate_cmd, deploy_type);
+    migrate_cmd	= migrate_cmd + " -l " + log_file;
+    migrate_cmd	= String::Quote (migrate_cmd);
+
+    y2milestone ("migrate command: '%1'", migrate_cmd);
+
+    process_id  = (integer) SCR::Execute (.process.start_shell, migrate_cmd);
+    any ret = nil;
+
+    // error log
+    string details	= "";
+
+    while (true) {
+	ret = UI::PollInput();
+
+	if (SCR::Read(.process.running, process_id) != true)
+	{
+	    update_progress ();
+
+	    integer status	= (integer) SCR::Read (.process.status, process_id);
+	    if (status != 0)
+	    {
+		UI::ReplaceWidget (`id (`rp_label), `HBox (
+		    // text label (action result)
+		    `Left (`Label (_("Migration process failed."))),
+		    // push button label
+		    `PushButton (`id (`details), _("Show details..."))
+		));
+		details	= (string) SCR::Read (.target.string, log_file);
+		if (details == nil)
+		    details = "";
+	    }
+	    else
+	    {
+		// all progress bars to end
+		UI::ChangeWidget (`id (`current_progress), `Value, 100);
+		UI::ChangeWidget (`id (`total_progress), `Value, tasks);
+
+		UI::ReplaceWidget (`id (`rp_label),
+		    // text label (action result)
+		    `Left (`Label (_("Migration was successfull.")))
+		);
+	    }
+	    Wizard::EnableNextButton ();
+	    Wizard::EnableBackButton ();
+	    break;
+	}
+	else
+	{
+	    update_progress ();
+	}
+	if (ret == `abort || ret == `cancel)
+	{
+	    // yes/no popup FIXME
+	    if (Popup::YesNo (_("Cancel migration?")))
+	    {
+		SCR::Execute (.process.kill, process_id, 15);
+	        sleep (100);
+		SCR::Execute (.process.kill, process_id);
+		break;
+	    }
+	}
+	sleep (500);
+    }
+
+    while (true)
+    {
+	ret = UI::UserInput();
+	if (ret == `details)
+	{
+	    UI::OpenDialog (`opt(`decorated), `HBox (`HSpacing(1.5), `VBox (
+		`HSpacing (80),
+		`VSpacing (),
+		// log view label
+		`LogView (`id (`details), _("Error log"), 12, 0),
+		`VSpacing (),
+		`PushButton (Label::OKButton ()),
+		`VSpacing (0.2)
+	    ), `HSpacing(1.5)));
+	    UI::ChangeWidget (`id (`details), `Value, details);
+	    UI::UserInput();
+	    UI::CloseDialog ();
+	    continue;
+	}
+	if (ret == `next)
+	{
+	    dialog_ret = `next;
+	    break;
+	} else if (ret == `back) {
+	    dialog_ret = `back;
+	    break;
+	} else if (ret == `abort || ret == `cancel) {
+	    if (Popup::ConfirmAbort (`incomplete)) {
+		dialog_ret = `abort;
+		break;
+	    } else {
+		continue;
+	    }
+	}
+    }
+
+    if (Mode::normal())
+	Wizard::CloseDialog();
+
+    return dialog_ret;
+}
