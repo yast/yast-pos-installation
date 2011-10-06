@@ -1,0 +1,213 @@
+/**
+ * This client checks which kind of SLEPOS Branch server installation is running
+ * and gathers the data for appropriate Branch Server initialization script
+ */
+
+{
+    textdomain "slepos-firstboot";
+
+    import "GetInstArgs";
+    import "Label";
+    import "Mode";
+    import "Popup";
+    import "Stage";
+    import "Wizard";
+
+    import "POSInstallation";
+
+
+    y2milestone ("SLEPOS firstboot initializaton (%1, %2)", Mode::mode (), Stage::stage ());
+
+    any ret	= `auto;
+
+    if (!Stage::firstboot ())
+    {
+	y2milestone ("this should only run in firstboot stage: exiting");
+	return ret;
+    }
+
+    map args = GetInstArgs::argmap ();
+
+    // files for offline installation
+    // http://svn.suse.de/viewvc/slepos/trunk/slepos/images/branchserver/root/usr/share/SLEPOS/OIF/
+    string oif_directory	= "/usr/share/SLEPOS/OIF";
+    boolean offline_installation= POSInstallation::offline_installation;
+    string offline_file		= POSInstallation::offline_file;
+
+    map<string,string> labels	= $[
+	// text entry label
+	"ALL_LDAPHOST"		: _("LDAP URI of Admin Server"),
+	// text entry label
+	"ALL_LDAPBASE"		: _("LDAP Base DN of Admin Server"),
+	// text entry label
+	"ALL_BRANCHLDAP"	: _("LDAP URI of Branch Server"),
+	// text entry label
+	"BRANCH_LDAPBASE"	: _("LDAP Base DN of Branch Server"),
+	// text entry label
+	"POS_ADMIN_DN"		: _("Administrator DN"),
+	// text entry label
+	"POS_ADMIN_PASSWORD"	: _("Administrator Password"),
+    ];
+
+    map<string,string> settings	= POSInstallation::online_installation_settings;
+
+    /*
+    If *.tgz in /usr/share/SLEPOS/OIF/ exists, off-line installation is possible
+    */
+    map out = (map) SCR::Execute (.target.bash_output,
+	sformat ("ls -A1 %1/*.tgz 2>/dev/null", oif_directory));
+    list<string> offline_files	= splitstring (out["stdout"]:"", "\n");
+    if (offline_file == "" && offline_files != nil && size (offline_files) > 0)
+    {
+	offline_installation	= true;
+	offline_file		= offline_files[0]:"";
+    }
+
+
+    void enable_disable_widgets () {
+
+	UI::ChangeWidget (`id (`offline_file), `Enabled, offline_installation);
+	UI::ChangeWidget (`id (`browse), `Enabled, offline_installation);
+
+	foreach (string w_id, string val, settings, {
+	    UI::ChangeWidget (`id (w_id), `Enabled, !offline_installation);
+	});
+    }
+
+    term contents = `HBox (`HSpacing (3), `RadioButtonGroup (`id (`rb), `VBox (
+
+	`Left (`RadioButton (`id (`offline_installation), `opt (`notify),
+	    // radio button label
+	    _("Offline Installation"), offline_installation)),
+	`VSpacing (),
+	`HBox (
+	    `HSpacing (3),
+	    `VBox (
+		// label (file name is on next line)
+		`Left (`Label (_("Offline installation file:"))),
+		`ReplacePoint (`id (`rp_file), `HBox (
+		    `Left (`Label (`id (`offline_file), offline_file)),
+		    // button label
+		    `Right (`PushButton (`id (`browse), _("&Change...")))
+		))
+	    ),
+	    `HSpacing (3)
+	),
+	`VSpacing (),
+	`Left (`RadioButton (`id (`online_installation), `opt (`notify),
+	    // radio button label
+	    _("Online Installation"), !offline_installation)
+	),
+	`HBox (`HSpacing (3), `VBox (
+	    `VSpacing (0.5),
+	    // text entry label
+	    `InputField (`id ("ALL_LDAPHOST"), `opt (`hstretch), _("LDAP URI of &Admin Server"),
+		settings["ALL_LDAPHOST"]:""),
+	    // text entry label
+	    `InputField (`id ("ALL_LDAPBASE"), `opt (`hstretch), _("&LDAP Base DN of Admin Server"),
+		settings["ALL_LDAPBASE"]:""),
+	    // text entry label
+	    `InputField (`id ("ALL_BRANCHLDAP"), `opt (`hstretch), _("LDAP URI of &Branch Server"),
+		settings["ALL_BRANCHLDAP"]:""),
+	    // text entry label
+	    `InputField (`id ("BRANCH_LDAPBASE"), `opt (`hstretch), _("LDA&P Base DN of Branch Server"),
+		settings["BRANCH_LDAPBASE"]:""),
+	    // text entry label
+	    `InputField (`id ("POS_ADMIN_DN"), `opt (`hstretch), _("Administrator &DN"),
+		settings["POS_ADMIN_DN"]:""),
+	    // text entry label
+	    `Password (`id ("POS_ADMIN_PASSWORD"), `opt (`hstretch), _("Administrator &Password"),
+		settings["POS_ADMIN_PASSWORD"]:"")
+	), `HSpacing (3))
+    )), `HSpacing (3));
+
+
+    // help text
+    string help_text	= _("<p>FIXME fill this</p>");
+
+    // dialog caption
+    Wizard::SetContents (_("POS Branch Server Installation"),
+	contents, help_text, args["enable_back"]:true, args["enable_next"]:true
+    );
+
+    enable_disable_widgets ();
+    if (offline_files == nil || offline_files == [])
+    {
+	UI::ChangeWidget (`id (`offline_installation), `Enabled, false);
+    }
+
+    while (true)
+    {
+	ret	= UI::UserInput ();
+	if (ret == `back)
+	{
+	    break;
+	}
+	if (ret == `abort && Popup::ConfirmAbort(`incomplete))
+	{
+	    break;
+	}
+	if (ret == `browse)
+	{
+	    string file = UI::AskForExistingFile (oif_directory, "*.tgz",
+		// label for file selection dialog
+		_("Choose the Offline Installation File")
+	    );
+	    if (file != nil)
+	    {
+		offline_file	= file;
+		/*
+		UI::ReplaceWidget (`id (`rp_file),
+		    `Left (`Label (`id (`offline_file), sformat (_("Offline installation file: %1"), offline_file)))
+		);
+		*/
+		UI::ReplaceWidget (`id (`rp_file), `HBox (
+		    `Left (`Label (`id (`offline_file), offline_file)),
+		    `Right (`PushButton (`id (`browse), _("&Change...")))
+		));
+	    }
+	}
+	if (ret == `offline_installation || ret == `online_installation)
+	{
+	    offline_installation	= ret == `offline_installation;
+	    enable_disable_widgets ();
+	}
+	if (ret == `next)
+	{
+	    POSInstallation::offline_installation	= offline_installation;
+	    POSInstallation::offline_file		= offline_file;
+	    boolean missing	= false;
+	    string write	= "";
+            foreach (string key, string val, settings, {
+		string value      = (string) UI::QueryWidget (`id (key), `Value);
+		if (!offline_installation && value == "")
+		{
+		    string label        = labels[key]:key;
+		    // error popup
+		    Popup::Error (sformat (_("The value of '%1' is empty."), label));
+		    UI::SetFocus (`id (key));
+		    missing     = true;
+		    break;
+		}
+		else
+		{
+		    settings[key]	= value;
+		    write	= sformat ("%1%2=%3\n", write, key, value);
+		}
+	    });
+	    if (missing)
+	    {
+		continue;
+	    }
+	    POSInstallation::online_installation_settings= settings;
+	    if (!offline_installation)
+	    {
+		y2milestone ("writing new /etc/SLEPOS/branchserver.conf");
+		SCR::Write (.target.string, POSInstallation::bs_config_file, write);
+//		SCR::Write (.target.string, "/tmp/SLEPOS/branchserver.conf", write);
+	    }
+	    break;
+	}
+    }
+    return ret;
+}

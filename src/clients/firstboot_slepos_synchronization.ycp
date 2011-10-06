@@ -1,0 +1,196 @@
+/**
+ * This client does Image synchronization
+ */
+
+{
+    textdomain "slepos-firstboot";
+
+    import "GetInstArgs";
+    import "Label";
+    import "Mode";
+    import "Popup";
+    import "Stage";
+    import "Wizard";
+
+    import "POSInstallation";
+
+
+    y2milestone ("SLEPOS firstboot synchronization (%1, %2)", Mode::mode (), Stage::stage ());
+
+    any ret	= `auto;
+
+    if (!Stage::firstboot ())
+    {
+	y2milestone ("this should only run in firstboot stage: exiting");
+	return ret;
+    }
+
+    map args		= GetInstArgs::argmap ();
+    map display_info	= UI::GetDisplayInfo ();
+    boolean text_mode	= display_info["TextMode"]:false;
+
+    if (args["going_back"]:false)
+    {
+	return ret;
+    }
+
+    term cont	= `VBox (
+	`VSpacing (0.4),
+	`ReplacePoint (`id (`rp_label),
+	    // text label
+	    `Label (`id (`label), _("Image synchronization is prepared."))
+	),
+	text_mode ? `VBox (
+	    // label
+	    `Left (`Label (_("Synchronization script output"))),
+	    `LogView (`id (`stdout), "", 6, 0),
+	    `VSpacing (0.4),
+	    // label
+	    `Left (`Label (_("Error output"))),
+	    `LogView (`id (`stderr), "", 2, 0)
+	) : `VBox (
+	    // label
+	    `Left (`Label (_("Synchronization script output"))),
+	    `VWeight (3, `LogView (`id (`stdout), "", 8, 0)),
+	    `VSpacing (0.4),
+	    // label
+	    `Left (`Label (_("Error output"))),
+	    `VWeight (1, `LogView (`id (`stderr), "", 4, 0))
+	)
+    );
+
+    term contents = `HBox (`HSpacing (1), `VBox (
+	`VSpacing (0.4),
+	cont,
+	`VSpacing (0.4)
+    ), `HSpacing (1));
+
+    // help text
+    string help_text	= _("<p>FIXME fill this</p>");
+
+    // dialog caption
+    Wizard::SetContents (_("POS Image Synchronization"),
+	contents, help_text, args["enable_back"]:true, args["enable_next"]:true
+    );
+
+    UI::OpenDialog (`opt (`decorated), `HBox (`HSpacing (2), `VBox (
+      `RadioButtonGroup (`id (`rb), `VBox (
+	`VSpacing (),
+	`Left (`RadioButton (`id (`sync),
+	    // radio button label
+	    _("Synchronize Image from Admin Server"),
+	    !POSInstallation::offline_installation)
+	),
+	`VSpacing (),
+	`Left (`RadioButton (`id (`sync_local),
+	    // radio button label
+	    _("Synchronize Image Locally"),
+	    POSInstallation::offline_installation)
+	),
+	`VSpacing (),
+	`Left (`RadioButton (`id (`no_sync),
+	    // radio button label
+	    _("Do not Synchronize Image"))),
+	`VSpacing ()
+      )),
+      `PushButton (`id (`ok), `opt (`default), Label::OKButton ()),
+      `VSpacing (0.5)
+    ), `HSpacing (2)));
+
+    ret	= UI::UserInput ();
+    symbol synchronize	= (symbol) UI::QueryWidget (`id (`rb), `Value);
+    UI::CloseDialog ();
+
+    if (synchronize == `no_sync)
+    {
+	return ret;
+    }
+    string cmd	= POSInstallation::sync_cmd;
+    if (synchronize == `sync_local)
+    {
+	cmd	= cmd + " --local";
+    }
+
+    UI::ReplaceWidget (`id (`rp_label),
+	// text label
+	`Label (`id (`label), _("Image synchronization is running. Please wait..."))
+    );
+
+    integer pid	= -1;
+
+    void update_output () {
+
+	string line = (string)SCR::Read (.process.read_line, pid);
+	if (line != nil && line != "")
+	    UI::ChangeWidget (`id(`stdout), `LastLine, line + "\n");
+	string err = (string)SCR::Read (.process.read_line_stderr, pid);
+	if (err!= nil && err != "")
+	    UI::ChangeWidget (`id(`stderr), `LastLine, err + "\n");
+    }
+
+    UI::BusyCursor ();
+    Wizard::DisableNextButton ();
+    Wizard::DisableBackButton ();
+
+    y2milestone ("Executing '%1'", cmd);
+    pid	= (integer) SCR::Execute (.process.start_shell, cmd);
+
+    while (true)
+    {
+	ret = (symbol) UI::PollInput();
+	if (SCR::Read(.process.running, pid) != true)
+	{
+	    update_output ();
+	    // explicitely check the process buffer after exit (bnc#488799)
+	    string buf   = (string) SCR::Read (.process.read, pid);
+	    string err_buf	= (string) SCR::Read (.process.read_stderr, pid);
+	    if (buf != nil && buf != "")
+		UI::ChangeWidget (`id(`stdout), `LastLine, buf + "\n");
+	    if (err_buf != nil && err_buf != "")
+		UI::ChangeWidget (`id(`stderr), `LastLine, err_buf + "\n");
+
+	    integer status	= (integer) SCR::Read (.process.status, pid);
+	    y2internal ("exit status of the script: %1", status);
+	    UI::ReplaceWidget (`id (`rp_label),
+		// text label
+		`Label (`id (`label), `opt (`boldFont), _("Synchronization is completed."))
+	    );
+	    break;
+	}
+	else
+	{
+	    update_output ();
+	}
+	if (ret == `cancel || ret == `abort)
+	{
+	    SCR::Execute (.process.kill, pid, 15);
+	    UI::ReplaceWidget (`id (`rp_label),
+		// text label
+		`Label (`id (`label), `opt (`boldFont), _("Synchronization has been aborted."))
+	    );
+	    break;
+	}
+	sleep (100);
+    }
+
+    SCR::Execute (.process.kill, pid);
+
+    UI::NormalCursor ();
+
+    Wizard::EnableBackButton ();
+    Wizard::EnableNextButton ();
+
+    while (true)
+    {
+	ret	= UI::UserInput ();
+	if (ret == `abort && !Popup::ConfirmAbort (`incomplete))
+	{
+	    continue;
+	}
+	else
+	{
+	    break;
+	}
+    }
+    return ret;
+}

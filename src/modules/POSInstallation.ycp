@@ -19,7 +19,31 @@ global string get_type_cmd	= "/usr/lib/SLEPOS/migration/slepos11_get_deploy_type
  */
 global string migrate_cmd	= "/usr/lib/SLEPOS/migration/slepos_migrate.sh";
 
+/**
+ * Path to BS configuration file
+ */
+global string bs_config_file	= "/etc/SLEPOS/branchserver.conf";
 
+/**
+ * BS initialization script
+ */
+global string bs_install_cmd	= "/usr/sbin/posInitBranchserver";
+
+/**
+ * Path to synchronization script
+ */
+global string sync_cmd		= "/usr/sbin/possyncimages";
+
+/**
+ * Detection if offline installation of BS is running
+ * (used during firstboot only)
+ */
+global boolean offline_installation	= false;
+
+/**
+ * Offline installation file
+ */
+global string offline_file		= "";
 
 /**
  * path to file or directory with data for detection script
@@ -49,6 +73,19 @@ global map for_migration	= $[
     "SLEPOS_Server_Admin"	: true,
     "SLEPOS_Server_Branch"	: false,
     "SLEPOS_Image_Server"	: true
+];
+
+/**
+ * Values that should be filled during BS online installation
+ * (usable during firstboot stage)
+ */
+global map<string,string> online_installation_settings	= $[
+    "ALL_LDAPHOST"		: "",
+    "ALL_BRANCHLDAP"		: "ldap://localhost",
+    "ALL_LDAPBASE"		: "",
+    "BRANCH_LDAPBASE"		: "",
+    "POS_ADMIN_DN"		: "",
+    "POS_ADMIN_PASSWORD"	: ""
 ];
 
 }

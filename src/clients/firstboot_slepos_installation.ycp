@@ -1,0 +1,165 @@
+/**
+ * This client calls Branch Server initialization script and shows its output
+ */
+
+{
+    textdomain "slepos-firstboot";
+
+    import "GetInstArgs";
+    import "Mode";
+    import "Popup";
+    import "Stage";
+    import "Wizard";
+
+    import "POSInstallation";
+
+
+    y2milestone ("SLEPOS firstboot installation (%1, %2)", Mode::mode (), Stage::stage ());
+
+    any ret	= `auto;
+
+    if (!Stage::firstboot ())
+    {
+	y2milestone ("this should only run in firstboot stage: exiting");
+	return ret;
+    }
+
+    map args		= GetInstArgs::argmap ();
+    map display_info	= UI::GetDisplayInfo ();
+    boolean text_mode	= display_info["TextMode"]:false;
+
+
+    term cont	= `VBox (
+	`VSpacing (0.4),
+	`ReplacePoint (`id (`rp_label),
+	    // text label
+	    `Label (`id (`label), _("Branch Server installation is running. Please wait..."))
+	),
+	text_mode ? `VBox (
+	    // label
+	    `Left (`Label (_("Setup script output"))),
+	    `LogView (`id (`stdout), "", 6, 0),
+	    `VSpacing (0.4),
+	    // label
+	    `Left (`Label (_("Error output"))),
+	    `LogView (`id (`stderr), "", 2, 0)
+	) : `VBox (
+	    // label
+	    `Left (`Label (_("Setup script output"))),
+	    `VWeight (3, `LogView (`id (`stdout), "", 8, 0)),
+	    `VSpacing (0.4),
+	    // label
+	    `Left (`Label (_("Error output"))),
+	    `VWeight (1, `LogView (`id (`stderr), "", 4, 0))
+	)
+    );
+
+    term contents = `HBox (`HSpacing (1), `VBox (
+	`VSpacing (0.4),
+	cont,
+	`VSpacing (0.4)
+    ), `HSpacing (1));
+
+    // help text
+    string help_text	= _("<p>FIXME fill this</p>");
+
+    // dialog caption
+    Wizard::SetContents (_("POS Branch Server Installation"),
+	contents, help_text, args["enable_back"]:true, args["enable_next"]:true
+    );
+
+
+    integer pid	= -1;
+
+    void update_output () {
+
+	string line = (string)SCR::Read (.process.read_line, pid);
+	if (line != nil && line != "")
+	    UI::ChangeWidget (`id(`stdout), `LastLine, line + "\n");
+	string err = (string)SCR::Read (.process.read_line_stderr, pid);
+	if (err!= nil && err != "")
+	    UI::ChangeWidget (`id(`stderr), `LastLine, err + "\n");
+    }
+
+    UI::BusyCursor ();
+    Wizard::DisableNextButton ();
+    Wizard::DisableBackButton ();
+
+    string cmd	= sformat ("%1 -r -n", POSInstallation::bs_install_cmd);
+    if (POSInstallation::offline_installation)
+    {
+	cmd	= sformat ("%1 -n -f %2",
+	    POSInstallation::bs_install_cmd, POSInstallation::offline_file);
+    }
+    y2milestone ("Executing '%1'", cmd);
+    pid	= (integer) SCR::Execute (.process.start_shell, cmd);
+
+    while (true)
+    {
+	ret = (symbol) UI::PollInput();
+	if (SCR::Read(.process.running, pid) != true)
+	{
+	    update_output ();
+	    // explicitely check the process buffer after exit (bnc#488799)
+	    string buf   = (string) SCR::Read (.process.read, pid);
+	    string err_buf	= (string) SCR::Read (.process.read_stderr, pid);
+	    if (buf != nil && buf != "")
+		UI::ChangeWidget (`id(`stdout), `LastLine, buf + "\n");
+	    if (err_buf != nil && err_buf != "")
+		UI::ChangeWidget (`id(`stderr), `LastLine, err_buf + "\n");
+
+	    integer status	= (integer) SCR::Read (.process.status, pid);
+	    y2internal ("exit status of the script: %1", status);
+	    UI::ReplaceWidget (`id (`rp_label),
+		// text label
+		`Label (`id (`label), `opt (`boldFont), _("Installation is completed."))
+	    );
+	    break;
+	}
+	else
+	{
+	    update_output ();
+	}
+	if (ret == `cancel || ret == `abort)
+	{
+	    SCR::Execute (.process.kill, pid, 15);
+	    UI::ReplaceWidget (`id (`rp_label),
+		// text label
+		`Label (`id (`label), `opt (`boldFont), _("Installation has been aborted."))
+	    );
+	    break;
+	}
+	sleep (100);
+    }
+
+    SCR::Execute (.process.kill, pid);
+
+    // FIXME save the logs?
+    /*
+    string logfile	= "/var/log/susemanager_setup.log";
+    string errfile	= "/var/log/susemanager_setup.err";
+    string stdout	= (string) UI::QueryWidget (`id (`stdout), `Value);
+    SCR::Write (.target.string, logfile, stdout);
+    string stderr	= (string) UI::QueryWidget (`id (`stderr), `Value);
+    SCR::Write (.target.string, errfile, stderr);
+    */
+
+    UI::NormalCursor ();
+
+    Wizard::EnableBackButton ();
+    Wizard::EnableNextButton ();
+
+    while (true)
+    {
+	ret	= UI::UserInput ();
+	if (ret == `abort && !Popup::ConfirmAbort (`incomplete))
+	{
+	    continue;
+	}
+	else
+	{
+	    break;
+	}
+    }
+    return ret;
+}
