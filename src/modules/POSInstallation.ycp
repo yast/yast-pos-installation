@@ -81,11 +81,7 @@ global map for_migration	= $[
  */
 global map<string,string> online_installation_settings	= $[
     "ALL_LDAPHOST"		: "",
-    "ALL_BRANCHLDAP"		: "ldap://localhost",
-    "ALL_LDAPBASE"		: "",
     "BRANCH_LDAPBASE"		: "",
-    "POS_ADMIN_DN"		: "",
     "POS_ADMIN_PASSWORD"	: ""
 ];
-
 }

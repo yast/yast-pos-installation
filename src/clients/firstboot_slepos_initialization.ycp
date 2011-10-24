@@ -38,17 +38,10 @@
 	// text entry label
 	"ALL_LDAPHOST"		: _("LDAP URI of Admin Server"),
 	// text entry label
-	"ALL_LDAPBASE"		: _("LDAP Base DN of Admin Server"),
+	"BRANCH_LDAPBASE"	: _("Branch/Location LDAP Base DN"),
 	// text entry label
-	"ALL_BRANCHLDAP"	: _("LDAP URI of Branch Server"),
-	// text entry label
-	"BRANCH_LDAPBASE"	: _("LDAP Base DN of Branch Server"),
-	// text entry label
-	"POS_ADMIN_DN"		: _("Administrator DN"),
-	// text entry label
-	"POS_ADMIN_PASSWORD"	: _("Administrator Password"),
+	"POS_ADMIN_PASSWORD"	: _("Branch Password"),
     ];
-
     map<string,string> settings	= POSInstallation::online_installation_settings;
 
     /*
@@ -104,19 +97,10 @@
 	    `InputField (`id ("ALL_LDAPHOST"), `opt (`hstretch), _("LDAP URI of &Admin Server"),
 		settings["ALL_LDAPHOST"]:""),
 	    // text entry label
-	    `InputField (`id ("ALL_LDAPBASE"), `opt (`hstretch), _("&LDAP Base DN of Admin Server"),
-		settings["ALL_LDAPBASE"]:""),
-	    // text entry label
-	    `InputField (`id ("ALL_BRANCHLDAP"), `opt (`hstretch), _("LDAP URI of &Branch Server"),
-		settings["ALL_BRANCHLDAP"]:""),
-	    // text entry label
-	    `InputField (`id ("BRANCH_LDAPBASE"), `opt (`hstretch), _("LDA&P Base DN of Branch Server"),
+	    `InputField (`id ("BRANCH_LDAPBASE"), `opt (`hstretch), _("Branch/&Location LDAP Base DN"),
 		settings["BRANCH_LDAPBASE"]:""),
 	    // text entry label
-	    `InputField (`id ("POS_ADMIN_DN"), `opt (`hstretch), _("Administrator &DN"),
-		settings["POS_ADMIN_DN"]:""),
-	    // text entry label
-	    `Password (`id ("POS_ADMIN_PASSWORD"), `opt (`hstretch), _("Administrator &Password"),
+	    `Password (`id ("POS_ADMIN_PASSWORD"), `opt (`hstretch), _("Branch &Password"),
 		settings["POS_ADMIN_PASSWORD"]:"")
 	), `HSpacing (3))
     )), `HSpacing (3));
@@ -156,11 +140,6 @@
 	    if (file != nil)
 	    {
 		offline_file	= file;
-		/*
-		UI::ReplaceWidget (`id (`rp_file),
-		    `Left (`Label (`id (`offline_file), sformat (_("Offline installation file: %1"), offline_file)))
-		);
-		*/
 		UI::ReplaceWidget (`id (`rp_file), `HBox (
 		    `Left (`Label (`id (`offline_file), offline_file)),
 		    `Right (`PushButton (`id (`browse), _("&Change...")))
@@ -178,7 +157,9 @@
 	    POSInstallation::offline_file		= offline_file;
 	    boolean missing	= false;
 	    string write	= "";
-            foreach (string key, string val, settings, {
+	    // list widgets in the order of appearence
+	    foreach (string key, [ "ALL_LDAPHOST", "BRANCH_LDAPBASE", "POS_ADMIN_PASSWORD"], {
+
 		string value      = (string) UI::QueryWidget (`id (key), `Value);
 		if (!offline_installation && value == "")
 		{
@@ -204,7 +185,6 @@
 	    {
 		y2milestone ("writing new /etc/SLEPOS/branchserver.conf");
 		SCR::Write (.target.string, POSInstallation::bs_config_file, write);
-//		SCR::Write (.target.string, "/tmp/SLEPOS/branchserver.conf", write);
 	    }
 	    break;
 	}

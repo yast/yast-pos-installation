@@ -5,6 +5,7 @@
 {
     textdomain "slepos-firstboot";
 
+    import "FileUtils";
     import "GetInstArgs";
     import "Mode";
     import "Popup";
@@ -27,6 +28,9 @@
     map args		= GetInstArgs::argmap ();
     map display_info	= UI::GetDisplayInfo ();
     boolean text_mode	= display_info["TextMode"]:false;
+    string stdout_file	= "posInitBranchserver.stdout";
+    string stderr_file	= "posInitBranchserver.stderr";
+    string logs_directory = "/var/log/pos";
 
 
     term cont	= `VBox (
@@ -37,7 +41,7 @@
 	),
 	text_mode ? `VBox (
 	    // label
-	    `Left (`Label (_("Setup script output"))),
+	    `Left (`Label (_("Setup script ('posInitBranchserver') output"))),
 	    `LogView (`id (`stdout), "", 6, 0),
 	    `VSpacing (0.4),
 	    // label
@@ -45,7 +49,7 @@
 	    `LogView (`id (`stderr), "", 2, 0)
 	) : `VBox (
 	    // label
-	    `Left (`Label (_("Setup script output"))),
+	    `Left (`Label (_("Setup script ('posInitBranchserver') output"))),
 	    `VWeight (3, `LogView (`id (`stdout), "", 8, 0)),
 	    `VSpacing (0.4),
 	    // label
@@ -92,8 +96,9 @@
 	    POSInstallation::bs_install_cmd, POSInstallation::offline_file);
     }
     y2milestone ("Executing '%1'", cmd);
+    UI::ChangeWidget (`id(`stdout), `LastLine, cmd + "\n\n");
     pid	= (integer) SCR::Execute (.process.start_shell, cmd);
-
+    integer exit_status	= 0;
     while (true)
     {
 	ret = (symbol) UI::PollInput();
@@ -108,8 +113,8 @@
 	    if (err_buf != nil && err_buf != "")
 		UI::ChangeWidget (`id(`stderr), `LastLine, err_buf + "\n");
 
-	    integer status	= (integer) SCR::Read (.process.status, pid);
-	    y2internal ("exit status of the script: %1", status);
+	    exit_status	= (integer) SCR::Read (.process.status, pid);
+	    y2milestone ("exit status of the script: %1", exit_status);
 	    UI::ReplaceWidget (`id (`rp_label),
 		// text label
 		`Label (`id (`label), `opt (`boldFont), _("Installation is completed."))
@@ -134,17 +139,24 @@
 
     SCR::Execute (.process.kill, pid);
 
-    // FIXME save the logs?
-    /*
-    string logfile	= "/var/log/susemanager_setup.log";
-    string errfile	= "/var/log/susemanager_setup.err";
-    string stdout	= (string) UI::QueryWidget (`id (`stdout), `Value);
-    SCR::Write (.target.string, logfile, stdout);
-    string stderr	= (string) UI::QueryWidget (`id (`stderr), `Value);
-    SCR::Write (.target.string, errfile, stderr);
-    */
+    // save the log files
+    if (FileUtils::CheckAndCreatePath (logs_directory))
+    {
+	SCR::Write (.target.string, logs_directory + "/" + stdout_file,
+	    (string) UI::QueryWidget (`id (`stdout), `Value));
+	SCR::Write (.target.string, logs_directory + "/" + stderr_file,
+	    (string) UI::QueryWidget (`id (`stderr), `Value));
+    }
+
 
     UI::NormalCursor ();
+
+    if (exit_status != nil && exit_status > 249 && exit_status < 254)
+    {
+	// error message, %1 is exit code (number)
+	Popup::Message (sformat (_("There has been a problem with network device configuration (%1).
+Proceed according to the manual."), exit_status));
+    }
 
     Wizard::EnableBackButton ();
     Wizard::EnableNextButton ();

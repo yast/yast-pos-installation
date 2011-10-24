@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon Oct 24 09:33:36 CEST 2011 - jsuchome@suse.cz
+
+- require less data for online installation
+- write posInitBranchserver outputs to the files
+- log the full command to the output window
+- 2.17.11
+
+-------------------------------------------------------------------
 Wed Sep  7 10:03:58 CEST 2011 - jsuchome@suse.cz
 
 - added support for SLEPOS firstboot (fate#312710)

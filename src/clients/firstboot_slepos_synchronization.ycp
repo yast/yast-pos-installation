@@ -42,7 +42,7 @@
 	),
 	text_mode ? `VBox (
 	    // label
-	    `Left (`Label (_("Synchronization script output"))),
+	    `Left (`Label (_("Synchronization script ('possyncimages') output"))),
 	    `LogView (`id (`stdout), "", 6, 0),
 	    `VSpacing (0.4),
 	    // label
@@ -50,7 +50,7 @@
 	    `LogView (`id (`stderr), "", 2, 0)
 	) : `VBox (
 	    // label
-	    `Left (`Label (_("Synchronization script output"))),
+	    `Left (`Label (_("Synchronization script ('possyncimages') output"))),
 	    `VWeight (3, `LogView (`id (`stdout), "", 8, 0)),
 	    `VSpacing (0.4),
 	    // label
@@ -133,6 +133,7 @@
     Wizard::DisableBackButton ();
 
     y2milestone ("Executing '%1'", cmd);
+    UI::ChangeWidget (`id(`stdout), `LastLine, cmd + "\n\n");
     pid	= (integer) SCR::Execute (.process.start_shell, cmd);
 
     while (true)
