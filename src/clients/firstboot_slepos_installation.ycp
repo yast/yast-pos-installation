@@ -92,7 +92,7 @@
     string cmd	= sformat ("%1 -r -n", POSInstallation::bs_install_cmd);
     if (POSInstallation::offline_installation)
     {
-	cmd	= sformat ("%1 -n -f %2",
+	cmd	= sformat ("%1 -r -n -f %2",
 	    POSInstallation::bs_install_cmd, POSInstallation::offline_file);
     }
     y2milestone ("Executing '%1'", cmd);

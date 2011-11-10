@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Nov 10 11:28:12 CET 2011 - jsuchome@suse.cz
+
+- call posInitBranchServer with -r for reinitialization (bnc#728971)
+- 2.17.12 
+
+-------------------------------------------------------------------
 Mon Oct 24 09:33:36 CEST 2011 - jsuchome@suse.cz
 
 - require less data for online installation
