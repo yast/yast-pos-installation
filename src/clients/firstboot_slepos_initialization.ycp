@@ -107,7 +107,13 @@
 
 
     // help text
-    string help_text	= _("<p>FIXME fill this</p>");
+    string help_text	= _("<p><b>Offline Installation</b><br>
+Initialize Branch Server from an Offline Installation File (OIF). If the file was not found automatically, use <b>Change</b> to enter its correct location.</p>
+
+<p><b>Online Installation</b><br>
+Initialize Branch Server using an internet connection to the Admin Server.
+  
+Enter <b>LDAP URI of Admin Server</b> (like <tt>ldaps://admin.mycomp.us</tt>), <b>Branch/Location LDAP Base DN</b> (for example <tt>cn=store1,ou=myunit,o=mycomp,c=us</tt>) and the <b>Password</b> associated with the given Branch/Location.</p>");
 
     // dialog caption
     Wizard::SetContents (_("POS Branch Server Installation"),

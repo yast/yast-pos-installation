@@ -40,23 +40,10 @@
 	    // text label
 	    `Label (`id (`label), _("Image synchronization is prepared."))
 	),
-	text_mode ? `VBox (
-	    // label
-	    `Left (`Label (_("Synchronization script ('possyncimages') output"))),
-	    `LogView (`id (`stdout), "", 6, 0),
-	    `VSpacing (0.4),
-	    // label
-	    `Left (`Label (_("Error output"))),
-	    `LogView (`id (`stderr), "", 2, 0)
-	) : `VBox (
-	    // label
-	    `Left (`Label (_("Synchronization script ('possyncimages') output"))),
-	    `VWeight (3, `LogView (`id (`stdout), "", 8, 0)),
-	    `VSpacing (0.4),
-	    // label
-	    `Left (`Label (_("Error output"))),
-	    `VWeight (1, `LogView (`id (`stderr), "", 4, 0))
-	)
+	// label
+	`Left (`Label (_("Synchronization script ('possyncimages') output"))),
+	`LogView (`id (`stdout), "", 6, 0),
+	`VSpacing (0.4)
     );
 
     term contents = `HBox (`HSpacing (1), `VBox (
@@ -66,7 +53,11 @@
     ), `HSpacing (1));
 
     // help text
-    string help_text	= _("<p>FIXME fill this</p>");
+    string help_text	= _("<p>
+Online Image Synchronization may need a longer time, depending on the Admin Server internet connection.
+</p>
+<p>
+Possible network problems indicate the need for a change in the Network Configuration step earlier in the sequence.</p>");
 
     // dialog caption
     Wizard::SetContents (_("POS Image Synchronization"),
@@ -93,11 +84,39 @@
 	    _("Do not Synchronize Image"))),
 	`VSpacing ()
       )),
-      `PushButton (`id (`ok), `opt (`default), Label::OKButton ()),
+      `HBox (
+	`PushButton (`id (`help), Label::HelpButton ()),
+	`PushButton (`id (`ok), `opt (`default), Label::OKButton ())
+      ),
       `VSpacing (0.5)
     ), `HSpacing (2)));
 
-    ret	= UI::UserInput ();
+    // help text for popup
+    string popup_help = _("
+<p>
+<b>Synchronize Images from Admin Server</b><br>
+Download and install the latest image versions. This action requires working internet connection to the Admin Server.
+</p>
+<p>
+<b>Synchronize Images Locally</b><br>
+Install the locally available images.
+</p>
+<p>
+<b>Do not Synchronize Images</b><br>
+Image synchronization is skipped. It should be run manually later, using the <tt>possyncimages</tt> script.</p>");
+
+    while (true)
+    {
+	ret	= UI::UserInput ();
+	if (ret == `help)
+	{
+	    Wizard::ShowHelp (popup_help);
+	}
+	if (ret == `ok)
+	{
+	    break;
+	}
+    }
     symbol synchronize	= (symbol) UI::QueryWidget (`id (`rb), `Value);
     UI::CloseDialog ();
 
@@ -110,6 +129,7 @@
     {
 	cmd	= cmd + " --local";
     }
+    cmd = cmd + " 2>&1";
 
     UI::ReplaceWidget (`id (`rp_label),
 	// text label
@@ -123,9 +143,6 @@
 	string line = (string)SCR::Read (.process.read_line, pid);
 	if (line != nil && line != "")
 	    UI::ChangeWidget (`id(`stdout), `LastLine, line + "\n");
-	string err = (string)SCR::Read (.process.read_line_stderr, pid);
-	if (err!= nil && err != "")
-	    UI::ChangeWidget (`id(`stderr), `LastLine, err + "\n");
     }
 
     UI::BusyCursor ();
@@ -144,11 +161,8 @@
 	    update_output ();
 	    // explicitely check the process buffer after exit (bnc#488799)
 	    string buf   = (string) SCR::Read (.process.read, pid);
-	    string err_buf	= (string) SCR::Read (.process.read_stderr, pid);
 	    if (buf != nil && buf != "")
 		UI::ChangeWidget (`id(`stdout), `LastLine, buf + "\n");
-	    if (err_buf != nil && err_buf != "")
-		UI::ChangeWidget (`id(`stderr), `LastLine, err_buf + "\n");
 
 	    integer status	= (integer) SCR::Read (.process.status, pid);
 	    y2internal ("exit status of the script: %1", status);

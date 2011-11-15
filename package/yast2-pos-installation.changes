@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Nov 15 16:26:33 CET 2011 - jsuchome@suse.cz
+
+- merge stdout and stderr windows
+- do not overwrite old log files
+- added the help texts (bnc#730186)
+- 2.17.13 
+
+-------------------------------------------------------------------
 Thu Nov 10 11:28:12 CET 2011 - jsuchome@suse.cz
 
 - call posInitBranchServer with -r for reinitialization (bnc#728971)

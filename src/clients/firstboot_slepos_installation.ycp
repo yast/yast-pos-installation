@@ -19,6 +19,11 @@
 
     any ret	= `auto;
 
+    if (GetInstArgs::going_back ())
+    {
+	return ret;
+    }
+
     if (!Stage::firstboot ())
     {
 	y2milestone ("this should only run in firstboot stage: exiting");
@@ -28,10 +33,22 @@
     map args		= GetInstArgs::argmap ();
     map display_info	= UI::GetDisplayInfo ();
     boolean text_mode	= display_info["TextMode"]:false;
-    string stdout_file	= "posInitBranchserver.stdout";
-    string stderr_file	= "posInitBranchserver.stderr";
+    string stdout_file	= "posInitBranchserver.log-1";
     string logs_directory = "/var/log/pos";
 
+    // find the latest log file
+    map out = (map) SCR::Execute (.target.bash_output,
+	sformat ("ls %1/posInitBranchserver.log-* 2>/dev/null | cut -f 2 -d - | sort -nr",
+	logs_directory));
+    if (out["stdout"]:"" != "")
+    {
+	list<string> nums	= splitstring (out["stdout"]:"", "\n");
+	integer last = tointeger (nums[0]:"0");
+	if (last != nil)
+	{
+	    stdout_file	= sformat ("posInitBranchserver.log-%1", last + 1);
+	}
+    }
 
     term cont	= `VBox (
 	`VSpacing (0.4),
@@ -39,22 +56,10 @@
 	    // text label
 	    `Label (`id (`label), _("Branch Server installation is running. Please wait..."))
 	),
-	text_mode ? `VBox (
+	`VBox (
 	    // label
 	    `Left (`Label (_("Setup script ('posInitBranchserver') output"))),
-	    `LogView (`id (`stdout), "", 6, 0),
-	    `VSpacing (0.4),
-	    // label
-	    `Left (`Label (_("Error output"))),
-	    `LogView (`id (`stderr), "", 2, 0)
-	) : `VBox (
-	    // label
-	    `Left (`Label (_("Setup script ('posInitBranchserver') output"))),
-	    `VWeight (3, `LogView (`id (`stdout), "", 8, 0)),
-	    `VSpacing (0.4),
-	    // label
-	    `Left (`Label (_("Error output"))),
-	    `VWeight (1, `LogView (`id (`stderr), "", 4, 0))
+	    `LogView (`id (`stdout), "", 8, 0)
 	)
     );
 
@@ -65,7 +70,17 @@
     ), `HSpacing (1));
 
     // help text
-    string help_text	= _("<p>FIXME fill this</p>");
+    string help_text	= _("<p>Here you can see the progress of <b>Branch Server initialization</b>.</p>
+
+<p>
+The initialization could fail from different reasons. For name or DN related errors, check the value of BranchServer DN entered in previous step.</p>
+<p>
+For network related errors, it's probably necessary to reconfigure network settings early in the sequence. Consult SLEPOS user guide, Chapter 5.1, <b>BranchServer Network configuration</b> for details.
+</p>
+
+<p>
+In case of various service errors, consult SLEPOS user guide, Chapter 4.6.1, <b>Adding BranchServer services</b>. Then check your LDAP tree or respective scService entry.
+</p>");
 
     // dialog caption
     Wizard::SetContents (_("POS Branch Server Installation"),
@@ -80,19 +95,16 @@
 	string line = (string)SCR::Read (.process.read_line, pid);
 	if (line != nil && line != "")
 	    UI::ChangeWidget (`id(`stdout), `LastLine, line + "\n");
-	string err = (string)SCR::Read (.process.read_line_stderr, pid);
-	if (err!= nil && err != "")
-	    UI::ChangeWidget (`id(`stderr), `LastLine, err + "\n");
     }
 
     UI::BusyCursor ();
     Wizard::DisableNextButton ();
     Wizard::DisableBackButton ();
 
-    string cmd	= sformat ("%1 -r -n", POSInstallation::bs_install_cmd);
+    string cmd	= sformat ("%1 -r -n 2>&1", POSInstallation::bs_install_cmd);
     if (POSInstallation::offline_installation)
     {
-	cmd	= sformat ("%1 -r -n -f %2",
+	cmd	= sformat ("%1 -r -n -f %2 2>&1",
 	    POSInstallation::bs_install_cmd, POSInstallation::offline_file);
     }
     y2milestone ("Executing '%1'", cmd);
@@ -107,11 +119,8 @@
 	    update_output ();
 	    // explicitely check the process buffer after exit (bnc#488799)
 	    string buf   = (string) SCR::Read (.process.read, pid);
-	    string err_buf	= (string) SCR::Read (.process.read_stderr, pid);
 	    if (buf != nil && buf != "")
 		UI::ChangeWidget (`id(`stdout), `LastLine, buf + "\n");
-	    if (err_buf != nil && err_buf != "")
-		UI::ChangeWidget (`id(`stderr), `LastLine, err_buf + "\n");
 
 	    exit_status	= (integer) SCR::Read (.process.status, pid);
 	    y2milestone ("exit status of the script: %1", exit_status);
@@ -144,8 +153,6 @@
     {
 	SCR::Write (.target.string, logs_directory + "/" + stdout_file,
 	    (string) UI::QueryWidget (`id (`stdout), `Value));
-	SCR::Write (.target.string, logs_directory + "/" + stderr_file,
-	    (string) UI::QueryWidget (`id (`stderr), `Value));
     }
 
 
