@@ -27,7 +27,7 @@ global string bs_config_file	= "/etc/SLEPOS/branchserver.conf";
 /**
  * BS initialization script
  */
-global string bs_install_cmd	= "/usr/sbin/posInitBranchserver";
+global string bs_init_cmd	= "/usr/sbin/posInitBranchserver";
 
 /**
  * Path to synchronization script
@@ -35,13 +35,13 @@ global string bs_install_cmd	= "/usr/sbin/posInitBranchserver";
 global string sync_cmd		= "/usr/sbin/possyncimages";
 
 /**
- * Detection if offline installation of BS is running
+ * Detection if offline initialization of BS is running
  * (used during firstboot only)
  */
-global boolean offline_installation	= false;
+global boolean offline_initialization	= false;
 
 /**
- * Offline installation file
+ * Offline initialization file
  */
 global string offline_file		= "";
 
@@ -76,10 +76,10 @@ global map for_migration	= $[
 ];
 
 /**
- * Values that should be filled during BS online installation
+ * Values that should be filled during BS online initialization
  * (usable during firstboot stage)
  */
-global map<string,string> online_installation_settings	= $[
+global map<string,string> online_initialization_settings	= $[
     "ALL_LDAPHOST"		: "",
     "BRANCH_LDAPBASE"		: "",
     "POS_ADMIN_PASSWORD"	: ""

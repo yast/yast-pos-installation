@@ -70,7 +70,7 @@
     ), `HSpacing (1));
 
     // help text
-    string help_text	= _("<p>Here you can see the progress of <b>Branch Server initialization</b>.</p>
+    string help_text	= _("<p>Here you can see the progress of <b>Branch Server Initialization</b>.</p>
 
 <p>
 The initialization could fail from different reasons. For name or DN related errors, check the value of BranchServer DN entered in previous step.</p>
@@ -83,7 +83,7 @@ In case of various service errors, consult SLEPOS user guide, Chapter 4.6.1, <b>
 </p>");
 
     // dialog caption
-    Wizard::SetContents (_("POS Branch Server Installation"),
+    Wizard::SetContents (_("POS Branch Server Initialization"),
 	contents, help_text, args["enable_back"]:true, args["enable_next"]:true
     );
 
@@ -101,11 +101,11 @@ In case of various service errors, consult SLEPOS user guide, Chapter 4.6.1, <b>
     Wizard::DisableNextButton ();
     Wizard::DisableBackButton ();
 
-    string cmd	= sformat ("%1 -r -n 2>&1", POSInstallation::bs_install_cmd);
-    if (POSInstallation::offline_installation)
+    string cmd	= sformat ("%1 -r -n 2>&1", POSInstallation::bs_init_cmd);
+    if (POSInstallation::offline_initialization)
     {
 	cmd	= sformat ("%1 -r -n -f %2 2>&1",
-	    POSInstallation::bs_install_cmd, POSInstallation::offline_file);
+	    POSInstallation::bs_init_cmd, POSInstallation::offline_file);
     }
     y2milestone ("Executing '%1'", cmd);
     UI::ChangeWidget (`id(`stdout), `LastLine, cmd + "\n\n");
@@ -126,7 +126,7 @@ In case of various service errors, consult SLEPOS user guide, Chapter 4.6.1, <b>
 	    y2milestone ("exit status of the script: %1", exit_status);
 	    UI::ReplaceWidget (`id (`rp_label),
 		// text label
-		`Label (`id (`label), `opt (`boldFont), _("Installation is completed."))
+		`Label (`id (`label), `opt (`boldFont), _("Initialization is completed."))
 	    );
 	    break;
 	}
@@ -139,7 +139,7 @@ In case of various service errors, consult SLEPOS user guide, Chapter 4.6.1, <b>
 	    SCR::Execute (.process.kill, pid, 15);
 	    UI::ReplaceWidget (`id (`rp_label),
 		// text label
-		`Label (`id (`label), `opt (`boldFont), _("Installation has been aborted."))
+		`Label (`id (`label), `opt (`boldFont), _("Initialization has been aborted."))
 	    );
 	    break;
 	}

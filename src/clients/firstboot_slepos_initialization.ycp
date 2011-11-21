@@ -1,5 +1,5 @@
 /**
- * This client checks which kind of SLEPOS Branch server installation is running
+ * This client checks which kind of SLEPOS Branch server initialization is running
  * and gathers the data for appropriate Branch Server initialization script
  */
 
@@ -28,10 +28,10 @@
 
     map args = GetInstArgs::argmap ();
 
-    // files for offline installation
+    // files for offline initialization
     // http://svn.suse.de/viewvc/slepos/trunk/slepos/images/branchserver/root/usr/share/SLEPOS/OIF/
     string oif_directory	= "/usr/share/SLEPOS/OIF";
-    boolean offline_installation= POSInstallation::offline_installation;
+    boolean offline_initialization= POSInstallation::offline_initialization;
     string offline_file		= POSInstallation::offline_file;
 
     map<string,string> labels	= $[
@@ -42,42 +42,42 @@
 	// text entry label
 	"POS_ADMIN_PASSWORD"	: _("Branch Password"),
     ];
-    map<string,string> settings	= POSInstallation::online_installation_settings;
+    map<string,string> settings	= POSInstallation::online_initialization_settings;
 
     /*
-    If *.tgz in /usr/share/SLEPOS/OIF/ exists, off-line installation is possible
+    If *.tgz in /usr/share/SLEPOS/OIF/ exists, off-line initialization is possible
     */
     map out = (map) SCR::Execute (.target.bash_output,
 	sformat ("ls -A1 %1/*.tgz 2>/dev/null", oif_directory));
     list<string> offline_files	= splitstring (out["stdout"]:"", "\n");
     if (offline_file == "" && offline_files != nil && size (offline_files) > 0)
     {
-	offline_installation	= true;
+	offline_initialization	= true;
 	offline_file		= offline_files[0]:"";
     }
 
 
     void enable_disable_widgets () {
 
-	UI::ChangeWidget (`id (`offline_file), `Enabled, offline_installation);
-	UI::ChangeWidget (`id (`browse), `Enabled, offline_installation);
+	UI::ChangeWidget (`id (`offline_file), `Enabled, offline_initialization);
+	UI::ChangeWidget (`id (`browse), `Enabled, offline_initialization);
 
 	foreach (string w_id, string val, settings, {
-	    UI::ChangeWidget (`id (w_id), `Enabled, !offline_installation);
+	    UI::ChangeWidget (`id (w_id), `Enabled, !offline_initialization);
 	});
     }
 
     term contents = `HBox (`HSpacing (3), `RadioButtonGroup (`id (`rb), `VBox (
 
-	`Left (`RadioButton (`id (`offline_installation), `opt (`notify),
+	`Left (`RadioButton (`id (`offline_initialization), `opt (`notify),
 	    // radio button label
-	    _("Offline Installation"), offline_installation)),
+	    _("Offline Initialization"), offline_initialization)),
 	`VSpacing (),
 	`HBox (
 	    `HSpacing (3),
 	    `VBox (
 		// label (file name is on next line)
-		`Left (`Label (_("Offline installation file:"))),
+		`Left (`Label (_("Offline Initialization File:"))),
 		`ReplacePoint (`id (`rp_file), `HBox (
 		    `Left (`Label (`id (`offline_file), offline_file)),
 		    // button label
@@ -87,9 +87,9 @@
 	    `HSpacing (3)
 	),
 	`VSpacing (),
-	`Left (`RadioButton (`id (`online_installation), `opt (`notify),
+	`Left (`RadioButton (`id (`online_initialization), `opt (`notify),
 	    // radio button label
-	    _("Online Installation"), !offline_installation)
+	    _("Online Initialization"), !offline_initialization)
 	),
 	`HBox (`HSpacing (3), `VBox (
 	    `VSpacing (0.5),
@@ -107,23 +107,23 @@
 
 
     // help text
-    string help_text	= _("<p><b>Offline Installation</b><br>
-Initialize Branch Server from an Offline Installation File (OIF). If the file was not found automatically, use <b>Change</b> to enter its correct location.</p>
+    string help_text	= _("<p><b>Offline Initialization</b><br>
+Initialize Branch Server from an <b>Offline Initialization File</b> (OIF). If the file was not found automatically, use <b>Change</b> to enter its correct location.</p>
 
-<p><b>Online Installation</b><br>
+<p><b>Online Initialization</b><br>
 Initialize Branch Server using an internet connection to the Admin Server.
   
 Enter <b>LDAP URI of Admin Server</b> (like <tt>ldaps://admin.mycomp.us</tt>), <b>Branch/Location LDAP Base DN</b> (for example <tt>cn=store1,ou=myunit,o=mycomp,c=us</tt>) and the <b>Password</b> associated with the given Branch/Location.</p>");
 
     // dialog caption
-    Wizard::SetContents (_("POS Branch Server Installation"),
+    Wizard::SetContents (_("POS Branch Server Initialization"),
 	contents, help_text, args["enable_back"]:true, args["enable_next"]:true
     );
 
     enable_disable_widgets ();
     if (offline_files == nil || offline_files == [])
     {
-	UI::ChangeWidget (`id (`offline_installation), `Enabled, false);
+	UI::ChangeWidget (`id (`offline_initialization), `Enabled, false);
     }
 
     while (true)
@@ -141,7 +141,7 @@ Enter <b>LDAP URI of Admin Server</b> (like <tt>ldaps://admin.mycomp.us</tt>), <
 	{
 	    string file = UI::AskForExistingFile (oif_directory, "*.tgz",
 		// label for file selection dialog
-		_("Choose the Offline Installation File")
+		_("Choose the Offline Initialization File")
 	    );
 	    if (file != nil)
 	    {
@@ -152,14 +152,14 @@ Enter <b>LDAP URI of Admin Server</b> (like <tt>ldaps://admin.mycomp.us</tt>), <
 		));
 	    }
 	}
-	if (ret == `offline_installation || ret == `online_installation)
+	if (ret == `offline_initialization || ret == `online_initialization)
 	{
-	    offline_installation	= ret == `offline_installation;
+	    offline_initialization	= ret == `offline_initialization;
 	    enable_disable_widgets ();
 	}
 	if (ret == `next)
 	{
-	    POSInstallation::offline_installation	= offline_installation;
+	    POSInstallation::offline_initialization	= offline_initialization;
 	    POSInstallation::offline_file		= offline_file;
 	    boolean missing	= false;
 	    string write	= "";
@@ -167,7 +167,7 @@ Enter <b>LDAP URI of Admin Server</b> (like <tt>ldaps://admin.mycomp.us</tt>), <
 	    foreach (string key, [ "ALL_LDAPHOST", "BRANCH_LDAPBASE", "POS_ADMIN_PASSWORD"], {
 
 		string value      = (string) UI::QueryWidget (`id (key), `Value);
-		if (!offline_installation && value == "")
+		if (!offline_initialization && value == "")
 		{
 		    string label        = labels[key]:key;
 		    // error popup
@@ -186,8 +186,8 @@ Enter <b>LDAP URI of Admin Server</b> (like <tt>ldaps://admin.mycomp.us</tt>), <
 	    {
 		continue;
 	    }
-	    POSInstallation::online_installation_settings= settings;
-	    if (!offline_installation)
+	    POSInstallation::online_initialization_settings= settings;
+	    if (!offline_initialization)
 	    {
 		y2milestone ("writing new /etc/SLEPOS/branchserver.conf");
 		SCR::Write (.target.string, POSInstallation::bs_config_file, write);

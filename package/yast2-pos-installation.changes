@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Nov 21 14:49:30 CET 2011 - jsuchome@suse.cz
+
+- replace mentioning of Installation with Initialization
+  (bnc#730186)
+- 2.17.14
+
+-------------------------------------------------------------------
 Tue Nov 15 16:26:33 CET 2011 - jsuchome@suse.cz
 
 - merge stdout and stderr windows

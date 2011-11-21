@@ -70,13 +70,13 @@ Possible network problems indicate the need for a change in the Network Configur
 	`Left (`RadioButton (`id (`sync),
 	    // radio button label
 	    _("Synchronize Image from Admin Server"),
-	    !POSInstallation::offline_installation)
+	    !POSInstallation::offline_initialization)
 	),
 	`VSpacing (),
 	`Left (`RadioButton (`id (`sync_local),
 	    // radio button label
 	    _("Synchronize Image Locally"),
-	    POSInstallation::offline_installation)
+	    POSInstallation::offline_initialization)
 	),
 	`VSpacing (),
 	`Left (`RadioButton (`id (`no_sync),
