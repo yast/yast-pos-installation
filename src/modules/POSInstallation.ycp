@@ -84,4 +84,10 @@ global map<string,string> online_initialization_settings	= $[
     "BRANCH_LDAPBASE"		: "",
     "POS_ADMIN_PASSWORD"	: ""
 ];
+
+/**
+ * Which way users wants to synchronize
+ * Possible values: `sync, `sync_local, `no_sync, `none (not yet initialized)
+ */
+global symbol sync_selection	= `none;
 }

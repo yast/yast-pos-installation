@@ -1,0 +1,101 @@
+/**
+ * This client prepares Image synchronization
+ */
+
+{
+    textdomain "slepos-firstboot";
+
+    import "GetInstArgs";
+    import "Label";
+    import "Mode";
+    import "Popup";
+    import "Stage";
+    import "Wizard";
+
+    import "POSInstallation";
+
+
+    y2milestone ("SLEPOS firstboot synchronization (%1, %2)", Mode::mode (), Stage::stage ());
+
+    any ret	= `auto;
+
+    if (!Stage::firstboot ())
+    {
+	y2milestone ("this should only run in firstboot stage: exiting");
+	return ret;
+    }
+
+    map args		= GetInstArgs::argmap ();
+
+    // help text for popup
+    string help_text = _("
+<p>
+<b>Synchronize Images from Admin Server</b><br>
+Download and install the latest image versions. This action requires working internet connection to the Admin Server.
+</p>
+<p>
+<b>Synchronize Images Locally</b><br>
+Install the locally available images.
+</p>
+<p>
+<b>Do not Synchronize Images</b><br>
+Image synchronization is skipped. It should be run manually later, using the <tt>possyncimages</tt> script.</p>");
+
+    symbol synchronize	= POSInstallation::sync_selection;
+    if (synchronize == `none)
+    {
+	synchronize	= POSInstallation::offline_initialization ? `sync_local : `sync;
+    }
+
+    term contents = `HBox (`HSpacing (1), `VBox (
+      `VSpacing (),
+      // label
+      `Left (`Label (_("Choose the way how the image should be synchronized"))),
+      `VSpacing (),
+      `HBox (`HSpacing (2), `RadioButtonGroup (`id (`rb), `VBox (
+	`Left (`RadioButton (`id (`sync),
+	    // radio button label
+	    _("Synchronize Image from Admin Server"),
+	    synchronize == `sync)
+	),
+	`VSpacing (),
+	`Left (`RadioButton (`id (`sync_local),
+	    // radio button label
+	    _("Synchronize Image Locally"),
+	    synchronize == `sync_local)
+	),
+	`VSpacing (),
+	`Left (`RadioButton (`id (`no_sync),
+	    // radio button label
+	    _("Do not Synchronize Image"),
+	    synchronize == `no_sync)
+	)
+      )))
+    ), `HSpacing (1));
+
+    // dialog caption
+    Wizard::SetContents (_("POS Image Synchronization"),
+	contents, help_text, args["enable_back"]:true, args["enable_next"]:true
+    );
+
+    while (true)
+    {
+	ret	= UI::UserInput ();
+	if (ret == `abort && !Popup::ConfirmAbort (`incomplete))
+	{
+	    continue;
+	}
+	else
+	{
+	    break;
+	}
+    }
+
+    synchronize	= (symbol) UI::QueryWidget (`id (`rb), `Value);
+
+    y2milestone ("selected syncrhonization type: %1", synchronize);
+
+    POSInstallation::sync_selection	= synchronize;
+
+    return ret;
+}

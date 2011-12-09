@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Dec  9 14:23:49 CET 2011 - jsuchome@suse.cz
+
+- selection of synchronization type made as extra step (bnc#730186)
+- help texts: removed chapter numbers
+- 2.17.15 
+
+-------------------------------------------------------------------
 Mon Nov 21 14:49:30 CET 2011 - jsuchome@suse.cz
 
 - replace mentioning of Installation with Initialization

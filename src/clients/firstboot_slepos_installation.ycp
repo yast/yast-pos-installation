@@ -75,11 +75,11 @@
 <p>
 The initialization could fail from different reasons. For name or DN related errors, check the value of BranchServer DN entered in previous step.</p>
 <p>
-For network related errors, it's probably necessary to reconfigure network settings early in the sequence. Consult SLEPOS user guide, Chapter 5.1, <b>BranchServer Network configuration</b> for details.
+For network related errors, it's probably necessary to reconfigure network settings early in the sequence. Consult SLEPOS user guide, Chapter <b>BranchServer Network configuration</b> for details.
 </p>
 
 <p>
-In case of various service errors, consult SLEPOS user guide, Chapter 4.6.1, <b>Adding BranchServer services</b>. Then check your LDAP tree or respective scService entry.
+In case of various service errors, consult SLEPOS user guide, Chapter <b>Adding BranchServer services</b>. Then check your LDAP tree or respective scService entry.
 </p>");
 
     // dialog caption
@@ -161,7 +161,7 @@ In case of various service errors, consult SLEPOS user guide, Chapter 4.6.1, <b>
     if (exit_status != nil && exit_status > 249 && exit_status < 254)
     {
 	// error message, %1 is exit code (number)
-	Popup::Message (sformat (_("There has been a problem with network device configuration (%1).
+	Popup::Message (sformat (_("There has been a problem with network device configuration (error %1).
 Proceed according to the manual."), exit_status));
     }
 
