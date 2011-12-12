@@ -125,8 +125,13 @@ In case of various service errors, consult SLEPOS user guide, Chapter <b>Adding 
 	    exit_status	= (integer) SCR::Read (.process.status, pid);
 	    y2milestone ("exit status of the script: %1", exit_status);
 	    UI::ReplaceWidget (`id (`rp_label),
-		// text label
-		`Label (`id (`label), `opt (`boldFont), _("Initialization is completed."))
+		`Label (`id (`label), `opt (`boldFont),
+		    exit_status == 0 ?
+		    // text label
+		    _("Initialization is completed.") :
+		    // text label
+		    _("Initialization has failed.")
+		)
 	    );
 	    break;
 	}

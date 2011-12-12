@@ -113,8 +113,13 @@ Possible network problems indicate the need for a change in the Network Configur
 	    integer status	= (integer) SCR::Read (.process.status, pid);
 	    y2internal ("exit status of the script: %1", status);
 	    UI::ReplaceWidget (`id (`rp_label),
-		// text label
-		`Label (`id (`label), `opt (`boldFont), _("Synchronization is completed."))
+		`Label (`id (`label), `opt (`boldFont),
+		    status == 0 ?
+		    // text label
+		    _("Synchronization is completed.") :
+		    // text label
+		    _("Synchronization has failed.")
+		)
 	    );
 	    break;
 	}

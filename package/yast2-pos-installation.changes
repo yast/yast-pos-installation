@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Dec 12 12:49:22 CET 2011 - jsuchome@suse.cz
+
+- show failure notice when script exits with non-zero (bnc#730186)
+- 2.17.16
+
+-------------------------------------------------------------------
 Fri Dec  9 14:23:49 CET 2011 - jsuchome@suse.cz
 
 - selection of synchronization type made as extra step (bnc#730186)
