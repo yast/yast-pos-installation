@@ -171,7 +171,11 @@ Proceed according to the manual."), exit_status));
     }
 
     Wizard::EnableBackButton ();
-    Wizard::EnableNextButton ();
+    // only allow to continue when script ended correctly
+    if (exit_status == 0)
+    {
+        Wizard::EnableNextButton ();
+    }
 
     while (true)
     {
