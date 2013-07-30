@@ -6,6 +6,8 @@ BuildRequires:	perl-XML-Writer update-desktop-files yast2 yast2-devtools yast2-t
 
 BuildArchitectures:	noarch
 
+Requires:       yast2-ruby-bindings >= 1.0.0
+
 Summary:	POS Installation and Upgrade
 
 %description
@@ -23,9 +25,8 @@ mkdir -p "$RPM_BUILD_ROOT"/etc/SLEPOS
 
 %files
 %defattr(-,root,root)
-@clientdir@/*.ycp
-@moduledir@/*.ycp
-@moduledir@/*.ybc
+@clientdir@/*.rb
+@moduledir@/*.rb
 %dir /etc/SLEPOS
 /etc/SLEPOS/*
 %doc @docdir@
