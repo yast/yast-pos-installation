@@ -17,7 +17,7 @@
 
 
 Name:           yast2-pos-installation
-Version:        3.1.0
+Version:        4.0.0
 Release:        0
 License:	GPL-2.0
 Group:		System/YaST
