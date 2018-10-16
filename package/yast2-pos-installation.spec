@@ -57,3 +57,4 @@ mkdir -p "$RPM_BUILD_ROOT"/etc/SLEPOS
 %dir /etc/SLEPOS
 /etc/SLEPOS/*
 %doc %{yast_docdir}
+%license COPYING
