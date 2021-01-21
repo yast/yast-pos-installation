@@ -28,7 +28,6 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Yardoc
-      # FIXME: you can just run "yardoc" if "check:doc" task is too strict...
       run: rake check:doc
 
   # downloading the Docker image takes some time so bundling several fast
