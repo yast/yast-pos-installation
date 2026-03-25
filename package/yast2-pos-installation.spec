@@ -17,7 +17,7 @@
 
 
 Name:           yast2-pos-installation
-Version:        4.1.0
+Version:        4.1.1
 Release:        0
 License:	GPL-2.0-only
 Group:		System/YaST
@@ -26,7 +26,6 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 Source0:        %{name}-%{version}.tar.bz2
 
 Requires:	yast2
-BuildRequires:	perl-XML-Writer update-desktop-files yast2
 BuildRequires:  yast2-devtools >= 3.1.10
 
 BuildArchitectures:	noarch
